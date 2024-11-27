@@ -1,0 +1,40 @@
+from enum import Enum
+
+
+class BidirectionalCallbackNewBidirectionalCallbackType(str, Enum):
+    BMC_FOOT_PRINTS_V11_CALLBACK = "bmc-foot-prints-v11-callback"
+    BMC_FOOT_PRINTS_V12_CALLBACK = "bmc-foot-prints-v12-callback"
+    BMC_REMEDY_CALLBACK = "bmc-remedy-callback"
+    CHERWELL_CALLBACK = "cherwell-callback"
+    CIRCONUS_CALLBACK = "circonus-callback"
+    CONNECT_WISE_MANAGE_CALLBACK = "connect-wise-manage-callback"
+    CONNECT_WISE_MANAGE_V2_CALLBACK = "connect-wise-manage-v2-callback"
+    DATADOG_CALLBACK = "datadog-callback"
+    DYNATRACE_APP_MON_CALLBACK = "dynatrace-app-mon-callback"
+    FRESHDESK_CALLBACK = "freshdesk-callback"
+    FRESHSERVICE_CALLBACK = "freshservice-callback"
+    HP_SERVICE_MANAGER_CALLBACK = "hp-service-manager-callback"
+    JIRA_CALLBACK = "jira-callback"
+    JIRA_SERVICE_DESK_CALLBACK = "jira-service-desk-callback"
+    KAYAKO_CALLBACK = "kayako-callback"
+    LIBRE_NMS_CALLBACK = "libre-nms-callback"
+    LOGIC_MONITOR_CALLBACK = "logic-monitor-callback"
+    MAGENTRIX_CALLBACK = "magentrix-callback"
+    MS_TEAMS_CALLBACK = "ms-teams-callback"
+    MS_TEAMS_V2_CALLBACK = "ms-teams-v2-callback"
+    OP5_CALLBACK = "op5-callback"
+    OPS_GENIE_CALLBACK = "ops-genie-callback"
+    PRTG_CALLBACK = "prtg-callback"
+    ROLLBAR_CALLBACK = "rollbar-callback"
+    SALES_FORCE_SERVICE_CLOUD_CALLBACK = "sales-force-service-cloud-callback"
+    SERVICE_NOW_V2_CALLBACK = "service-now-v2-callback"
+    SERVICE_NOW_V3_CALLBACK = "service-now-v3-callback"
+    SOLARWINDS_MSP_NCENTRAL_CALLBACK = "solarwinds-msp-ncentral-callback"
+    SPLUNK_CALLBACK = "splunk-callback"
+    SPLUNK_ITSI_CALLBACK = "splunk-itsi-callback"
+    STATUS_PAGE_IO_CALLBACK = "status-page-io-callback"
+    SUMO_LOGIC_CALLBACK = "sumo-logic-callback"
+    ZENDESK_CALLBACK = "zendesk-callback"
+
+    def __str__(self) -> str:
+        return str(self.value)

@@ -1,0 +1,90 @@
+{
+  "opsgenie": {
+    "api_key": "",
+    "username": "",
+    "host": "https://api.eu.opsgenie.com",
+    "webapp_url": "https://app.eu.opsgenie.com",
+    "on_call_schedule_ids": []
+  },
+  "tygenie": {
+    "theme": "flexoki",
+    "refresh_period": 60,
+    "default_filter": "opened",
+    "open_detail_alert_on_enter": false,
+    "log": {
+      "enable": false,
+      "file": "/tmp/tygenie.log"
+    },
+    "desktop_notification": {
+      "enable": true,
+      "urgency": "Critical",
+      "when_on_call_only": false
+    },
+    "alert_details": {
+      "default_tab": "description"
+    },
+    "alerts": {
+      "date_format": "%d/%m %H:%M",
+      "sort": "updatedAt",
+      "limit": 20,
+      "display_page_by_priority": false
+    },
+    "note_on_ack": {
+      "enable": false,
+      "message": "Alert has been acknowledged using Tygenie"
+    },
+    "note_on_unack": {
+      "enable": false,
+      "message": "Alert has been unacknowledged using Tygenie"
+    },
+    "note_on_close": {
+      "enable": false,
+      "message": "Alert has been closed using Tygenie"
+    },
+    "note_on_tag": {
+      "enable": false,
+      "message": "Tag '{tag}' has been added using Tygenie"
+    },
+    "note_on_untag": {
+      "enable": false,
+      "message": "Tag '{tag}' has been removed using Tygenie"
+    },
+    "keybindings": {
+      "ack": "a",
+      "unack": "U",
+      "close": "c",
+      "tag": "t",
+      "untag": "T",
+      "refresh": "r",
+      "next_page": "right",
+      "previous_page": "left",
+      "open_in_webbrowser": "ctrl+w",
+      "focus_on_alerts_list": "f5",
+      "focus_on_alert_details": "f6",
+      "focus_on_alert_notes": "f7",
+      "palette": "ctrl+p"
+    },
+    "plugins": {
+      "alerts_list_formatter": null,
+      "alert_description_formatter": null
+    },
+    "default_tag": "XXXXX",
+    "filters": {
+      "mine": {
+        "key": "m",
+        "filter": "owner:XXXXX",
+        "description": "Mine"
+      },
+      "opened": {
+        "key": "o",
+        "filter": "status:open",
+        "description": "Opened"
+      },
+      "all": {
+        "key": "A",
+        "filter": "",
+        "description": "All"
+      }
+    }
+  }
+}

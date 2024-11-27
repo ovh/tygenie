@@ -1,0 +1,59 @@
+Licences:
+Apache-2.0
+BSD-2-Clause
+BSD-3-Clause
+LGPL-3.0-only
+MIT
+MPL-2.0
+Unknown
+
+Packages:
+Pygments; BSD-2-Clause
+anyio; MIT
+attrs; MIT
+autocommand; LGPL-3.0-only
+backports.tarfile; MIT
+beautifulsoup4; MIT
+certifi; MPL-2.0
+dbus-next; MIT
+desktop-notifier; MIT
+h11; MIT
+httpcore; BSD-3-Clause
+httpx; BSD-3-Clause
+idna; BSD-3-Clause
+importlib_metadata; Apache-2.0
+inflect; MIT
+jaraco.collections; MIT
+jaraco.context; MIT
+jaraco.functools; MIT
+jaraco.text; MIT
+linkify-it-py; MIT
+markdown-it-py; MIT
+markdownify; MIT
+mdit-py-plugins; MIT
+mdurl; MIT
+more-itertools; MIT
+my-test-package; MIT
+packaging; Apache-2.0
+pendulum; MIT
+pip; MIT
+platformdirs; MIT
+python-dateutil; Apache-2.0
+rich; MIT
+setuptools; MIT
+six; MIT
+sniffio; Apache-2.0
+soupsieve; MIT
+textual; MIT
+time-machine; MIT
+tomli; MIT
+tree-sitter-languages; Apache-2.0
+tree-sitter; MIT
+typeguard; MIT
+typing_extensions; Unknown. See pypi/typing_extensions/LICENSE file
+tzdata; Apache-2.0
+uc-micro-py; MIT
+udatetime; Apache-2.0
+urllib3; MIT
+wheel; MIT
+zipp; MIT

@@ -1,0 +1,244 @@
+#alerts_list_switcher {
+  height: 45%;
+  layout: grid;
+  grid-size: 1 1;
+  grid-columns: 1fr;
+  grid-rows: 100%;
+  border: round $primary-lighten-3 35%;
+  border-title-color: $text-muted;
+  border-subtitle-color: $text-muted;
+
+  &:focus-within {
+    border: round $accent 100%;
+    border-title-color: $text;
+    border-title-style: b;
+    border-subtitle-color: $text;
+  }
+}
+
+#alerts_data_table {
+  height: 1fr;
+  width: 1fr;
+}
+
+.acked {
+  background: $acked;
+}
+
+.open {
+  background: $open;
+}
+
+.closed {
+  background: $closed;
+}
+
+#alert_detail_container {
+  layout: grid;
+  grid-size: 2 2;
+  grid-columns: 65% 35%;
+  grid-rows: 85% 15%;
+  height: 1fr;
+}
+
+#alert_detail_tabbed_content {
+  margin-top: 1;
+}
+
+#alert_details_title {
+  text_style: bold;
+  text-align: left;
+  width: 1fr;
+  border: none;
+  padding: 1 1 1 1;
+}
+
+#alert_detail_tags {
+  text_style: bold;
+  text-align: left;
+  width: 1fr;
+}
+
+#datatable_alert_details {
+  width: 1fr;  
+}
+
+#raw_alert_details {
+  border: round $primary-lighten-3 35%;
+  border-title-color: $text-muted;
+  height: 1fr;
+  layout: grid;
+  grid-size: 1 3;
+  grid-rows: 13% 80% 7%;
+
+  &:focus-within {
+    border: round $accent 100%;
+    border-title-color: $text;
+    border-title-style: b;
+  }
+}
+
+#alert_details_tags_switcher {
+  margin: 1 1 0 1;
+}
+
+#alert_details_description_switcher {
+  margin: 1 1 0 1;
+}
+
+#alert_details_details_switcher {
+  margin: 1 1 0 1;
+}
+
+#tabpane_raw {
+  margin: 1 1 0 1;
+}
+
+#alert_details_url_buttons_bar {
+  border: blank;
+  border-title-color: $text-muted;
+  width: 1fr;
+}
+
+#alert_notes {
+  border: round $primary-lighten-3 35%;
+  border-title-color: $text-muted;
+  width: 1fr;
+
+  &:focus-within {
+    border: round $accent 100%;
+    border-title-color: $text;
+    border-title-style: b;
+  }
+}
+
+#alert_notes_switcher {
+  margin: 1 1 1 1;
+}
+
+#md_alert_note {
+  padding-top: 1;
+}
+
+#alert_action_container {
+  column-span: 2;
+  border: round $primary-lighten-3 35%;
+  border-title-color: $text-muted;
+  border-subtitle-color: $text-muted;
+  height: auto;
+
+  &:focus-within {
+    border: round $accent 100%;
+    border-title-color: $text;
+    border-title-style: b;
+  }
+}
+
+#alert_action_horizontal_container {
+  align: left middle;
+  height: auto;
+  width: auto;
+}
+
+#open_in_webbrowser {
+  height: auto;
+  width: auto;
+  margin-left: 1;
+}
+
+#add_note {
+  height: auto;
+  width: auto;
+  margin: 0 0 0 1;
+}
+
+#tag_alert {
+  height: auto;
+  width: auto;
+  margin-left: 1;
+}
+
+#tag_value_container {
+  height: auto;
+  dock: left;
+  width: auto;
+}
+
+#tag_value_horizontal_group {
+  width: auto;
+}
+
+#tag_label {
+  height: auto;
+  content-align: right middle;
+  padding-top: 1;
+  width: auto;
+  color: $text-muted;
+}
+
+#tag_input {
+  height: auto;
+  width: 20;
+  text-style: bold;
+  border: tall $primary-background-lighten-3;
+}
+
+#label_alert_note {
+  color: $success;
+  width: 1fr;
+  height: 1fr;
+}
+
+
+/* Add note screen */
+AddNoteScreen {
+  align: center middle;
+}
+
+#add_note_grid {
+  grid-size: 2;
+  grid-gutter: 1 2;
+  grid-rows: 85% 15%;
+  padding: 0 1;
+  width: 50%;
+  height: 45%;
+  border: thick $background 80%;
+}
+
+#add_note_textarea {
+  column-span: 2;
+  height: 1fr;
+  width: 1fr;
+}
+
+#add_note_grid > Button {
+  width: 1fr;
+  height: auto;
+  max-height: 10vh;
+}
+
+/* First launch screen */
+SettingsScreen {
+  align: center middle;
+}
+
+#settings_grid {
+  height: 1fr;
+  layout: grid;
+  grid-size: 1 2;
+  grid-columns: 1fr;
+  grid-rows: 90% 10%;
+  padding: 0 1;
+  width: 1fr;
+  height: 1fr;
+  border: thick $background 80%;
+}
+
+#settings_textarea {
+}
+
+#settings_grid > Button {
+  margin: 1 1 1 1;
+  width: 1fr; 
+  max-height: 10vh;
+}
