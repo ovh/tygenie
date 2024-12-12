@@ -2,7 +2,7 @@ name: Publish Python Package to PyPI when a Release is Created
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 permissions:
   contents: read
