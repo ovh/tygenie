@@ -31,7 +31,6 @@ jobs:
           # NOTE: put your own distribution build steps here.
           python -m pip install hatch
           hatch build
-
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
