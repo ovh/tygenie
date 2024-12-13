@@ -15,7 +15,7 @@ Initially created to test [textual python framework](https://www.textualize.io/)
   - [pipx](#pipx)
   - [uv](#uv)
   - [pip](#pip)
-  - [Start the application](#start-the-application)
+- [Start the application](#start-the-application)
 - [Configuration](#configuration)
 - [Sample config](#sample-config)
 - [Plugin](#plugin)
@@ -30,8 +30,6 @@ Initially created to test [textual python framework](https://www.textualize.io/)
 <a name="features"></a>
 
 ## Features
-
----
 
 - list alerts by pages
 - display details / description / tags / notes
@@ -50,8 +48,6 @@ Initially created to test [textual python framework](https://www.textualize.io/)
 
 ## Screenshots
 
----
-
 **Overview:**
 
 > <img src="./assets/screenshots/overview.png" alt="overview" width="80%"/>
@@ -64,15 +60,11 @@ Initially created to test [textual python framework](https://www.textualize.io/)
 
 ## Requirements
 
----
-
 - python >= 3.11
 
 <a name="compatibility"></a>
 
 ## Compatibility
-
----
 
 - Tested/used on GNU/Linux and MacOS
 
@@ -80,15 +72,29 @@ Initially created to test [textual python framework](https://www.textualize.io/)
 
 ## Limitations
 
----
+- Desktop notification might not work on MacOS as [the application needs to be signed](https://github.com/samschott/desktop-notifier?tab=readme-ov-file#notes-on-macos) it depends how you installed python (eg using homebrew won't work)
 
-- Desktop notification does not work on MacOS as [the application needs to be signed](https://github.com/samschott/desktop-notifier?tab=readme-ov-file#notes-on-macos) so depending the way you installed python it might not work (eg using homebrew won't work)
+- To select/past text in the application depending the terminal you are using use the following key:
 
-- This is a specificity of the framework based on Rich library, to select content with your mouse you **MUST** use the caps key
+  - iTerm Hold the OPTION key.
+  - Gnome Terminal Hold the SHIFT key.
+  - Windows Terminal Hold the SHIFT key.
+
+Please refer to [textual FAQ](https://textual.textualize.io/FAQ/#how-can-i-select-and-copy-text-in-a-textual-app)
 
 ## Installation
 
----
+<a name="pip"></a>
+
+### pip
+
+Each release of Tygenie is published on [pypi](https://pypi.org/project/tygenie/) so simply do a pip install
+
+```bash
+pip install tygenie
+```
+
+Or by using directly code from Github repository with pipx/uv
 
 <a name="pipx"></a>
 
@@ -106,19 +112,9 @@ pipx install git+https://github.com/ovh/tygenie.git
 uv tool install git+https://github.com/ovh/tygenie.git
 ```
 
-<a name="pip"></a>
-
-### pip
-
-```bash
-git clone https://github.com/ovh/tygenie.git
-cd tygenie
-pip install .
-```
-
 <a name="start-the-application"></a>
 
-### Start the application
+## Start the application
 
 ```bash
 tygenie
@@ -139,8 +135,6 @@ options:
 <a name="configuration"></a>
 
 ## Configuration
-
----
 
 ```json5
 {
@@ -244,15 +238,11 @@ and other related information.
 
 ## Sample config
 
----
-
 A sample config file is available [here](https://github.com/ovh/tygenie/blob/master/assets/tygenie.json)
 
 <a name="plugin"></a>
 
 ## Plugin
-
----
 
 Tygenie supports two type of customisation:
 
@@ -392,8 +382,6 @@ Edit the settings file then go to the plugins json key:
 
 ## Opsgenie API / OpenAPI / python-client
 
----
-
 The current Opsgenie API python SDK does not implement the full API and the available [swagger.json](https://github.com/opsgenie/opsgenie-oas/blob/master/swagger.json) file is not a Swagger 2.0 compliant file.
 
 A fork of opsgenie-oas repository had been done by Github user [bougar](https://github.com/bougar/opsgenie-oas) which contains a compliant Swagger 2.0 files. This file has been used to generate the Opsgenie client API consumer used in Tygenie.
@@ -404,15 +392,11 @@ The swagger file has been converted to openapi 3.0 and consumed by [openapi-pyth
 
 ## Related links
 
----
-
 - Contribute: <https://github.com/ovh/tygenie/blob/master/CONTRIBUTING.md>
 - Report bugs: <https://github.com/ovh/tygenie/issues>
 
 <a name="license"></a>
 
 ## License
-
----
 
 See <https://github.com/ovh/tygenie/blob/master/LICENSE>
