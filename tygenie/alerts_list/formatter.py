@@ -1,4 +1,5 @@
 import re
+import pendulum
 from importlib import import_module
 
 from rich.text import Text
@@ -14,6 +15,7 @@ class BaseFormatter:
 
     displayed_fields = {
         "created_at": "Created",
+        "duration": "Created since",
         "status": "Status",
         "priority": "Priority",
         "message": "Message",
@@ -136,6 +138,15 @@ class BaseFormatter:
             )
         else:
             return Text("")
+
+    def duration(self, value) -> Text:
+        created = pendulum.parse(str(self.to_format["created_at"]), tz="UTC")
+        now_utc = pendulum.now(tz="UTC")
+        duration = now_utc.diff_for_humans(created, absolute=True)
+        return Text(
+            duration,
+            style=self.app.theme_variables.get("warning", self.colors["white"]),
+        )
 
 
 class AlertFormatter:
