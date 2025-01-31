@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import json
 import os
 import pathlib
@@ -10,10 +11,10 @@ SAMPLE_CONFIG = f"{os.path.dirname(__file__)}/assets/tygenie.json"
 
 
 class Config:
-    def __init__(self):
+    def __init__(self, config_path: pathlib.Path | str = CONFIG_PATH):
         self.config_dir: pathlib.Path = CONFIG_DIR
         self.config_file: str = CONFIG_FILE
-        self._config_path: pathlib.Path = CONFIG_DIR / CONFIG_FILE
+        self._config_path: pathlib.Path = pathlib.Path(config_path)
         self.config: dict = {}
         self.tygenie: dict = {}
         self.opsgenie: dict = {}
@@ -28,7 +29,7 @@ class Config:
         return self._config_path
 
     @config_path.setter
-    def config_path(self, value: pathlib.Path | str = CONFIG_DIR / CONFIG_FILE):
+    def config_path(self, value: pathlib.Path | str = CONFIG_PATH):
         if isinstance(value, str):
             value = pathlib.Path(value)
 
@@ -46,7 +47,7 @@ class Config:
 
     def load(self):
         with open(self.config_path, "r") as conf:
-            self.config = json.load(conf)
+            self.config = json.load(conf, object_pairs_hook=OrderedDict)
 
         self._load_config()
 
@@ -116,3 +117,9 @@ class Config:
 
 ty_config = Config()
 ty_config.load()
+
+
+def set_config_file(config_file):
+    global ty_config
+    ty_config = Config(config_path=config_file)
+    ty_config.load()

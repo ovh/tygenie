@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
-
 import asyncio
 import pendulum
 from httpx import Timeout
-from textual import log
 
 import tygenie.consts as c
+import tygenie.config as config
 
-from tygenie.config import ty_config
+from tygenie.logger import logger
 from tygenie.opsgenie_rest_api_client import AuthenticatedClient
 from tygenie.opsgenie_rest_api_client.models.add_tags_to_alert_payload import (
     AddTagsToAlertPayload,
@@ -37,27 +35,6 @@ __all__ = (
     "OpsGenie",
     "client",
 )
-
-
-def ApiLog(message: str = "") -> None:
-    if not message:
-        return
-
-    log_config = ty_config.tygenie.get("log", {"enable": False})
-    if "enable" in log_config and not log_config["enable"]:
-        return
-
-    date = pendulum.now()
-    logline = f"[{date}] {message}"
-    # Logline visble in textual console: textual console -vvv
-    # and run app.py file with textual run app.py --dev
-    log(f"{logline}")
-    try:
-        with open(log_config.get("file", "/tmp/tygenie.log"), "a") as f:
-            f.write(logline + "\n")
-    except Exception as e:
-        log(f"Unable to log in file: {e}")
-        pass
 
 
 class OpsGenie:
@@ -100,7 +77,7 @@ class OpsGenie:
     async def add_note(self, parameters: dict = {}, note: str = ""):
         body = AlertActionPayload(user=self.username, source=self.source, note=note)
         parameters["body"] = body
-        ApiLog(f"opsgenie call add_note with params: {parameters}")
+        logger.log(f"opsgenie call add_note with params: {parameters}")
         return await self.api_call(add_note, **parameters)
 
     async def unack_alert(self, parameters: dict = {}, note: str = ""):
@@ -148,16 +125,16 @@ class OpsGenie:
 
         response = None
         try:
-            ApiLog(f"API call {resource.__name__} with params {kwargs}")
+            logger.log(f"API call {resource.__name__} with params {kwargs}")
             response = await getattr(resource, "asyncio_detailed")(
                 client=self.client, **kwargs
             )
-            ApiLog(f"API status code: {response.status_code}")
-            ApiLog(f"API content: {response.content}")
-            ApiLog(f"API call {resource.__name__} done")
+            logger.log(f"API status code: {response.status_code}")
+            logger.log(f"API content: {response.content}")
+            logger.log(f"API call {resource.__name__} done")
             return response.parsed
         except Exception as e:
-            ApiLog(f"Exception in API call: {e}")
+            logger.log(f"Exception in API call: {e}")
             return response
 
 
@@ -174,12 +151,14 @@ class Query:
 
     @property
     def limit(self) -> int:
-        self._limit: int = int(ty_config.tygenie["alerts"].get("limit", 22))
+        self._limit: int = int(config.ty_config.tygenie["alerts"].get("limit", 22))
         return self._limit
 
     @limit.setter
     def limit(self, value=0) -> int:
-        self._limit: int = value or int(ty_config.tygenie["alerts"].get("limit", 22))
+        self._limit: int = value or int(
+            config.ty_config.tygenie["alerts"].get("limit", 22)
+        )
         return self._limit
 
     def _get_query(self, filter_name: str | None = None) -> str:
@@ -188,13 +167,13 @@ class Query:
             if self.current_filter is not None:
                 filter_name = self.current_filter
             else:
-                filter_name = ty_config.tygenie.get("default_filter", None)
+                filter_name = config.ty_config.tygenie.get("default_filter", None)
 
         if filter_name is not None:
-            filters: dict = ty_config.tygenie.get("filters", {})
+            filters: dict = config.ty_config.tygenie.get("filters", {})
             cust_filter: dict | None = filters.get(filter_name, None)
             if cust_filter is None:
-                ApiLog(f"Custom filter '{filter_name}' not found")
+                logger.log(f"Custom filter '{filter_name}' not found")
             else:
                 query = cust_filter.get("filter", "")
 
@@ -235,7 +214,7 @@ class OpsgenieClient(OpsGenie):
     def _load(self) -> None:
         self.api = OpsGenie(
             **{
-                k: ty_config.opsgenie.get(k, None)
+                k: config.ty_config.opsgenie.get(k, None)
                 for k in ["username", "host", "api_key"]
             }
         )

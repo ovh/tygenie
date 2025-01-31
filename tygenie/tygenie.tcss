@@ -94,12 +94,6 @@
   margin: 1 1 0 1;
 }
 
-#alert_details_url_buttons_bar {
-  border: blank;
-  border-title-color: $text-muted;
-  width: 1fr;
-}
-
 #alert_notes {
   border: round $primary-lighten-3 35%;
   border-title-color: $text-muted;
