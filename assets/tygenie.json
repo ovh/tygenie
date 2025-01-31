@@ -58,6 +58,7 @@
       "refresh": "r",
       "next_page": "right",
       "previous_page": "left",
+      "add_note": "n",
       "open_in_webbrowser": "ctrl+w",
       "focus_on_alerts_list": "f5",
       "focus_on_alert_details": "f6",

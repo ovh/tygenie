@@ -23,7 +23,7 @@ dependencies = [
   "pendulum==3.0.0",
   "python_dateutil==2.9.0.post0",
   "rich==13.9.4",
-  "textual[syntax]==0.87.1",
+  "textual[syntax]==1.0.0",
   "udatetime==0.0.17",
 ]
 requires-python = ">=3.11"
