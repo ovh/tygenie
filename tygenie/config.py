@@ -1,8 +1,8 @@
-from collections import OrderedDict
 import json
 import os
 import pathlib
 import shutil
+from collections import OrderedDict
 
 CONFIG_DIR = pathlib.Path.home() / ".config" / "tygenie"
 CONFIG_FILE = "tygenie.json"

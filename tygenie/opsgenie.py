@@ -1,27 +1,22 @@
 import asyncio
+
 import pendulum
 from httpx import Timeout
 
-import tygenie.consts as c
 import tygenie.config as config
-
-from tygenie.logger import logger
+import tygenie.consts as c
+import tygenie.logger as ty_logger
 from tygenie.opsgenie_rest_api_client import AuthenticatedClient
-from tygenie.opsgenie_rest_api_client.models.add_tags_to_alert_payload import (
-    AddTagsToAlertPayload,
-)
-from tygenie.opsgenie_rest_api_client.models.alert_action_payload import (
-    AlertActionPayload,
-)
+from tygenie.opsgenie_rest_api_client.api.account import get_info
 from tygenie.opsgenie_rest_api_client.api.alert import (
+    acknowledge_alert,
     add_note,
     add_tags,
     close_alert,
-    list_alerts,
     count_alerts,
     get_alert,
+    list_alerts,
     list_notes,
-    acknowledge_alert,
     remove_tags,
     un_acknowledge_alert,
 )
@@ -29,7 +24,12 @@ from tygenie.opsgenie_rest_api_client.api.schedule import list_schedules
 from tygenie.opsgenie_rest_api_client.api.who_is_on_call import (
     get_on_calls,
 )
-from tygenie.opsgenie_rest_api_client.api.account import get_info
+from tygenie.opsgenie_rest_api_client.models.add_tags_to_alert_payload import (
+    AddTagsToAlertPayload,
+)
+from tygenie.opsgenie_rest_api_client.models.alert_action_payload import (
+    AlertActionPayload,
+)
 
 __all__ = (
     "OpsGenie",
@@ -41,9 +41,9 @@ class OpsGenie:
 
     def __init__(self, api_key: str = "", host: str = "", username: str = ""):
         self.api_key = api_key
-        self.host = host
+        self.ost = host
         self.username = username
-        self.source = "TyGenie {}".format(c.VERSION)
+        self._load_config()
         self.client = AuthenticatedClient(
             base_url=self.host,
             token=self.api_key,
@@ -77,7 +77,6 @@ class OpsGenie:
     async def add_note(self, parameters: dict = {}, note: str = ""):
         body = AlertActionPayload(user=self.username, source=self.source, note=note)
         parameters["body"] = body
-        logger.log(f"opsgenie call add_note with params: {parameters}")
         return await self.api_call(add_note, **parameters)
 
     async def unack_alert(self, parameters: dict = {}, note: str = ""):
@@ -125,17 +124,30 @@ class OpsGenie:
 
         response = None
         try:
-            logger.log(f"API call {resource.__name__} with params {kwargs}")
+            ty_logger.logger.log(f"API call {resource.__name__} with params {kwargs}")
             response = await getattr(resource, "asyncio_detailed")(
                 client=self.client, **kwargs
             )
-            logger.log(f"API status code: {response.status_code}")
-            logger.log(f"API content: {response.content}")
-            logger.log(f"API call {resource.__name__} done")
+            ty_logger.logger.log(f"API status code: {response.status_code}")
+            ty_logger.logger.log(f"API content: {response.content}")
+            ty_logger.logger.log(f"API response headers: {response.headers}")
+            ty_logger.logger.log(f"API call {resource.__name__} done")
             return response.parsed
         except Exception as e:
-            logger.log(f"Exception in API call: {e}")
+            ty_logger.logger.log(f"Exception in API call: {e}")
             return response
+
+    def _load_config(self):
+        self.api_key = config.ty_config.opsgenie.get("api_key", "")
+        self.host = config.ty_config.opsgenie.get("host", "")
+        self.username = config.ty_config.opsgenie.get("username", "")
+        self.source = "TyGenie {}".format(c.VERSION)
+
+    def load(self):
+        self._load_config()
+
+    def reload(self):
+        self._load_config()
 
 
 class Query:
@@ -173,7 +185,7 @@ class Query:
             filters: dict = config.ty_config.tygenie.get("filters", {})
             cust_filter: dict | None = filters.get(filter_name, None)
             if cust_filter is None:
-                logger.log(f"Custom filter '{filter_name}' not found")
+                ty_logger.logger.log(f"Custom filter '{filter_name}' not found")
             else:
                 query = cust_filter.get("filter", "")
 
@@ -212,18 +224,19 @@ class OpsgenieClient(OpsGenie):
         super().__init__()
 
     def _load(self) -> None:
-        self.api = OpsGenie(
-            **{
-                k: config.ty_config.opsgenie.get(k, None)
-                for k in ["username", "host", "api_key"]
-            }
-        )
+        self.api.load()
 
     def reload(self) -> None:
         self._load()
 
 
 client = OpsgenieClient()
+
+
+def reload():
+    global client
+    client = OpsgenieClient()
+
 
 if __name__ == "__main__":
 

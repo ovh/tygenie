@@ -1,20 +1,19 @@
-import os
 import argparse
+import os
 
 from desktop_notifier import DesktopNotifier
 from textual.app import App
 from textual.binding import Binding
 
-from tygenie import consts
-from tygenie.alerts_list.formatter import AlertFormatter
-from tygenie.alert_details.description_formatter import ContentFormatter
-from tygenie.config import set_config_file
-
 import tygenie.config as config
-
+import tygenie.logger as logger
+import tygenie.opsgenie as opsgenie
 import tygenie.screens.add_note
 import tygenie.screens.alerts
 import tygenie.screens.settings
+from tygenie import consts
+from tygenie.alert_details.description_formatter import ContentFormatter
+from tygenie.alerts_list.formatter import AlertFormatter
 
 
 class TygenieApp(App):
@@ -91,7 +90,9 @@ def main() -> None:
     arguments = parser.parse_args()
 
     if arguments.config is not None:
-        set_config_file(arguments.config)
+        config.set_config_file(arguments.config)
+        logger.reload()
+        opsgenie.reload()
 
     app = TygenieApp()
     try:

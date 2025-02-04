@@ -5,6 +5,7 @@ from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button
+
 from tygenie.config import ty_config
 from tygenie.widgets.input import TagValueInput
 

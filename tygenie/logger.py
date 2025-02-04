@@ -1,16 +1,19 @@
 import pendulum
 from textual import log
-from tygenie.config import ty_config
+
+import tygenie.config as config
 
 
 class Logger:
 
     def __init__(self):
-        self.config = ty_config.tygenie.get(
-            "log", {"enable": False, "file": "/tmp/tygenie.log"}
+        self._load_config()
+
+    def _load_config(self):
+        self.enable = config.ty_config.tygenie.get("log", {}).get("enable", False)
+        self.file = config.ty_config.tygenie.get("log", {}).get(
+            "file", "/tmp/tygenie.log"
         )
-        self.enable = self.config["enable"]
-        self.file = self.config["file"]
 
     def log(self, message: str = ""):
         if not message or not self.enable:
@@ -30,3 +33,8 @@ class Logger:
 
 
 logger = Logger()
+
+
+def reload():
+    global logger
+    logger = Logger()
