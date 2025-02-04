@@ -3,13 +3,14 @@ from textual.containers import HorizontalGroup
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Input, Static
-from tygenie.config import ty_config
+
+import tygenie.config as config
 
 
 class TagValueInput(Widget):
 
     def compose(self) -> ComposeResult:
-        default_tag = ty_config.tygenie.get("default_tag", "")
+        default_tag = config.ty_config.tygenie.get("default_tag", "")
         tag_label: Static = Static(
             name="tag_label", id="tag_label", content="Tag value: "
         )

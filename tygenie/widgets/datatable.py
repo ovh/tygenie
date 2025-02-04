@@ -1,7 +1,7 @@
-from textual.binding import Binding
-from textual.widgets import DataTable
-from textual.message import Message
 from textual import events
+from textual.binding import Binding
+from textual.message import Message
+from textual.widgets import DataTable
 
 
 class TygenieDataTable(DataTable, inherit_bindings=False):

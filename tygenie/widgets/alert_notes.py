@@ -3,8 +3,8 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import ContentSwitcher, Label, Markdown
 
+import tygenie.opsgenie as opsgenie
 from tygenie.widgets.center_middle import CenterMiddle
-from tygenie.opsgenie import client
 
 
 class AlertNotes(Widget):
@@ -38,7 +38,7 @@ class AlertNotes(Widget):
     async def get_alert_notes(self, opsgenie_id: str | None = None):
         if not opsgenie_id:
             return None
-        alert_notes = await client.api.get_alert_notes(
+        alert_notes = await opsgenie.client.api.get_alert_notes(
             parameters={
                 "identifier": opsgenie_id,
                 "identifier_type": "id",

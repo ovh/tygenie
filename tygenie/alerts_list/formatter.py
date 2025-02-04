@@ -1,12 +1,12 @@
 import re
-import pendulum
 from importlib import import_module
 
+import pendulum
 from rich.text import Text
+from textual.app import App
 from udatetime import from_string as dtfstr
 
-from textual.app import App
-from tygenie.config import ty_config
+import tygenie.config as config
 from tygenie.opsgenie_rest_api_client.models.alert import Alert
 from tygenie.opsgenie_rest_api_client.models.alert_report import AlertReport
 
@@ -35,7 +35,7 @@ class BaseFormatter:
         self.to_format: dict = to_format
         self.alert: Alert | None = alert
         self.formatted: dict[Text, Text] = {k: Text("") for k in self.to_format.keys()}
-        self.date_format: str = ty_config.tygenie.get("alerts", {}).get(
+        self.date_format: str = config.ty_config.tygenie.get("alerts", {}).get(
             "date_format", "%d/%m %H:%M"
         )
         self.disabled: bool = disabled

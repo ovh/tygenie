@@ -1,17 +1,21 @@
+import json
+from typing import TYPE_CHECKING
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Grid
 from textual.message import Message
 from textual.widgets import Button, Footer, TextArea
 
-from tygenie import consts
-from tygenie.opsgenie import client
-from tygenie.widgets.textarea import TygenieTextArea
-from tygenie.screen import TyScreen
-
 import tygenie.config as config
+import tygenie.logger as logger
+import tygenie.opsgenie as opsgenie
+from tygenie import consts
+from tygenie.screen import TyScreen
+from tygenie.widgets.textarea import TygenieTextArea
 
-import json
+if TYPE_CHECKING:
+    from tygenie.app import TygenieApp
 
 
 class SettingsScreen(TyScreen):
@@ -28,7 +32,7 @@ class SettingsScreen(TyScreen):
         self.original_text = ""
         self.has_changed = True
         super().__init__()
-        self.app: "tygenie.app.TygenieApp"
+        self.app: "TygenieApp"
 
     async def on_screen_resume(self):
         await self.recompose()
@@ -83,7 +87,9 @@ class SettingsScreen(TyScreen):
                 )
             try:
                 config.ty_config.reload()
-                client.reload()
+                opsgenie.reload()
+                logger.reload()
+
                 self.app.reload()
             except Exception as e:
                 self.notify(severity="error", message=f"Failed to relaod app: {e}")

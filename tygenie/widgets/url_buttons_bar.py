@@ -1,4 +1,5 @@
 import json
+
 from textual.app import ComposeResult
 from textual.containers import HorizontalScroll
 from textual.widget import Widget

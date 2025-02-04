@@ -13,8 +13,8 @@ from textual.widgets import (
     TabPane,
 )
 
-from tygenie.config import ty_config
-from tygenie.opsgenie import client
+import tygenie.config as config
+import tygenie.opsgenie as opsgenie
 from tygenie.widgets.center_middle import CenterMiddle
 from tygenie.widgets.tabbed_content import TygenieTabbedContent
 from tygenie.widgets.tags import Tags
@@ -60,7 +60,7 @@ class AlertDetails(Widget):
     def compose(self):
         self.border_title = "Alert details"
         yield AlertDetailTitle(id="alert_details_title")
-        alert_details_config = ty_config.tygenie.get("alert_details", {})
+        alert_details_config = config.ty_config.tygenie.get("alert_details", {})
         initial_tab = alert_details_config.get("default_tab", "details")
         with AlertDetailsTabbedContent(
             id="alert_detail_tabbed_content",
@@ -104,7 +104,7 @@ class AlertDetails(Widget):
     async def get_alert_detail(self, opsgenie_id: str | None = None):
         if not opsgenie_id:
             return None
-        alert = await client.api.get_alert(
+        alert = await opsgenie.client.api.get_alert(
             parameters={
                 "identifier": opsgenie_id,
                 "identifier_type": "id",

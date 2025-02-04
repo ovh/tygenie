@@ -1,12 +1,9 @@
 import asyncio
-from math import ceil
 import re
 import time
 import webbrowser
-
-import tygenie.config as config
-
-from udatetime import from_string as dtfstr
+from math import ceil
+from typing import TYPE_CHECKING
 
 from desktop_notifier import Urgency
 from textual import on, work
@@ -26,21 +23,26 @@ from textual.widgets import (
     Pretty,
 )
 from textual.widgets._data_table import CellDoesNotExist
+from udatetime import from_string as dtfstr
 
+import tygenie.config as config
+import tygenie.opsgenie as opsgenie
 from tygenie import consts
-from tygenie.opsgenie import Query, client
+from tygenie.screen import TyScreen
 from tygenie.screens.settings import SettingsScreen
 from tygenie.widgets.alert_actions import AlertActionContainer
 from tygenie.widgets.alert_details import (
-    AlertDetailTitle,
     AlertDetails,
     AlertDetailsTabbedContent,
+    AlertDetailTitle,
 )
 from tygenie.widgets.alert_notes import AlertNotes
 from tygenie.widgets.center_middle import CenterMiddle
 from tygenie.widgets.datatable import TygenieDataTable
 from tygenie.widgets.tags import Tags
-from tygenie.screen import TyScreen
+
+if TYPE_CHECKING:
+    from tygenie.app import TygenieApp
 
 
 class AlertsScreen(TyScreen):
@@ -251,7 +253,7 @@ class AlertsScreen(TyScreen):
             super().__init__()
 
     data = {}
-    opsgenie_query = Query()
+    opsgenie_query = opsgenie.Query()
     page = reactive(1)
     first_alert_count = reactive(0)
     last_alert_count = reactive(0)
@@ -262,7 +264,7 @@ class AlertsScreen(TyScreen):
 
     def __init__(self):
         super().__init__()
-        self.app: "tygenie.app.TygenieApp"
+        self.app: "TygenieApp"
 
     @on(SettingsScreen.SettingsUpdated)
     async def recompose_app(self):
@@ -402,7 +404,7 @@ class AlertsScreen(TyScreen):
         on_call_schedule_ids = config.ty_config.opsgenie.get("on_call_schedule_ids", [])
         self.current_on_call_member = ""
         for on_call_schedule_id in on_call_schedule_ids:
-            result = await client.api.whois_on_call(
+            result = await opsgenie.client.api.whois_on_call(
                 parameters={"identifier": on_call_schedule_id}
             )
             if result is not None and len(result.data.on_call_recipients):
@@ -552,7 +554,7 @@ class AlertsScreen(TyScreen):
                 # First time data are lookup, now we can flag the app as started
                 self.app.started = True
 
-        alerts = await client.api.list_alerts(parameters=parameters)
+        alerts = await opsgenie.client.api.list_alerts(parameters=parameters)
 
         if alerts is not None:
             _update_data_table(alerts)
@@ -573,7 +575,7 @@ class AlertsScreen(TyScreen):
     @on(GetAlertsCount)
     async def get_alerts_count(self, message):
         parameters = self.opsgenie_query.current
-        result = await client.api.count_alerts(parameters=parameters)
+        result = await opsgenie.client.api.count_alerts(parameters=parameters)
         if result is not None:
             self.total_alerts = result.data.count
         else:
@@ -719,7 +721,7 @@ class AlertsScreen(TyScreen):
 
         message = self._get_cursor_message()
         self.notify(f"Acking alert\n{message}")
-        await client.api.ack_alert(
+        await opsgenie.client.api.ack_alert(
             parameters={"identifier": opsgenie_id},
             note=self._get_note_on_action("ack"),
         )
@@ -746,7 +748,7 @@ class AlertsScreen(TyScreen):
 
         message = self._get_cursor_message()
         self.notify(f"Unacking alert\n{message} ...")
-        await client.api.unack_alert(
+        await opsgenie.client.api.unack_alert(
             parameters={"identifier": opsgenie_id},
             note=self._get_note_on_action("unack"),
         )
@@ -773,7 +775,7 @@ class AlertsScreen(TyScreen):
 
         message = self._get_cursor_message()
         self.notify(f"Closing alert\n{message}...")
-        await client.api.close_alert(
+        await opsgenie.client.api.close_alert(
             parameters={"identifier": opsgenie_id},
             note=self._get_note_on_action("close"),
         )
@@ -955,7 +957,7 @@ class AlertsScreen(TyScreen):
         message = self._get_cursor_message()
         self.notify(f'Adding tag "{tag_value}" on alert: \n{message}')
         note = f"{self._get_note_on_action('tag')}".format(tag=tag_value)
-        await client.api.tag_alert(
+        await opsgenie.client.api.tag_alert(
             parameters={"identifier": opsgenie_id}, tags=[tag_value], note=note
         )
         self.post_message(self.LookupDataWithDelay(delay=1.75))
@@ -978,7 +980,7 @@ class AlertsScreen(TyScreen):
         message = self._get_cursor_message()
         self.notify(f'Removing tag "{tag.value}" on alert: \n{message}')
         note = f"{self._get_note_on_action('untag')}".format(tag=tag.value)
-        await client.api.remove_tag_alert(
+        await opsgenie.client.api.remove_tag_alert(
             parameters={"identifier": opsgenie_id}, tags=[tag.value], note=note
         )
         self.post_message(self.LookupDataWithDelay(delay=1.75))
@@ -994,7 +996,7 @@ class AlertsScreen(TyScreen):
         message = self._get_cursor_message()
         self.notify(f'Removing tag "{tag.value}" on alert: \n{message}')
 
-        await client.api.remove_tag_alert(
+        await opsgenie.client.api.remove_tag_alert(
             parameters={"identifier": opsgenie_id}, tags=[tag.value]
         )
         self.post_message(self.LookupDataWithDelay(delay=1.75))
@@ -1005,7 +1007,9 @@ class AlertsScreen(TyScreen):
         note: str = message.note
         if not note or not opsgenie_id:
             return
-        await client.api.add_note(parameters={"identifier": opsgenie_id}, note=note)
+        await opsgenie.client.api.add_note(
+            parameters={"identifier": opsgenie_id}, note=note
+        )
 
     @on(AlertActionContainer.AddNote)
     @work(exclusive=True, exit_on_error=False, thread=False)
@@ -1016,7 +1020,7 @@ class AlertsScreen(TyScreen):
             return
 
         async def _add_note(result):
-            await client.api.add_note(
+            await opsgenie.client.api.add_note(
                 parameters={"identifier": opsgenie_id}, note=result
             )
             if result and not re.match("^\n+$", result):
