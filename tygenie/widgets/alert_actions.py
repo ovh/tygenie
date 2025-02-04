@@ -7,6 +7,7 @@ from textual.widget import Widget
 from textual.widgets import Button
 
 from tygenie.config import ty_config
+from tygenie.consts import VERSION
 from tygenie.widgets.input import TagValueInput
 
 
@@ -28,6 +29,7 @@ class AlertActionContainer(Widget):
 
     def compose(self) -> ComposeResult:
         self.border_title = "Actions"
+        self.border_subtitle = f"[orange1]Version:[/orange1] [b]{VERSION}[/b]"
         with Horizontal(id="alert_action_horizontal_container"):
             yield TagValueInput(id="tag_value_container")
             yield Button(
