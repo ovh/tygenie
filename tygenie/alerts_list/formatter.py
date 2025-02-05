@@ -177,6 +177,7 @@ class AlertFormatter:
         displayed_fields = config.ty_config.tygenie.get("displayed_fields", {})
         fields_methods = displayed_fields.keys()
         if not fields_methods:
+            displayed_fields = self.formatter_fields
             fields_methods = self.formatter_fields.keys()
 
         unknown_fields = []
@@ -198,7 +199,9 @@ class AlertFormatter:
             )
 
         final_fields = [f for f in fields_methods if f not in unknown_fields]
-        final_displayed_fields = {k: displayed_fields[k] for k in final_fields}
+        final_displayed_fields = {
+            k: displayed_fields[k] for k in final_fields if k in displayed_fields
+        }
 
         return final_displayed_fields
 
