@@ -2,12 +2,15 @@ import argparse
 import os
 
 from desktop_notifier import DesktopNotifier
+from textual import on
 from textual.app import App
 from textual.binding import Binding
+from textual.widgets import Footer
 
 import tygenie.config as config
 import tygenie.logger as logger
 import tygenie.opsgenie as opsgenie
+from tygenie.screen import TyScreen
 import tygenie.screens.add_note
 import tygenie.screens.alerts
 import tygenie.screens.settings
@@ -56,8 +59,11 @@ class TygenieApp(App):
             formatter=plugins.get("alert_description_formatter", None)
         )
 
-    def reload(self):
+    @on(tygenie.screens.settings.SettingsScreen.SettingsUpdated)
+    async def reload(self):
         self.load_plugins()
+        self.refresh_bindings()
+        await self.get_screen(consts.ALERTS_SCREEN_NAME).reload()
 
     def get_theme_variable_defaults(self) -> dict[str, str]:
         theme_config = self.get_theme(self.theme)

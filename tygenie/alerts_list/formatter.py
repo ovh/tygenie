@@ -7,6 +7,7 @@ from textual.app import App
 from udatetime import from_string as dtfstr
 
 import tygenie.config as config
+import tygenie.logger as ty_logger
 from tygenie.opsgenie_rest_api_client.models.alert import Alert
 from tygenie.opsgenie_rest_api_client.models.alert_report import AlertReport
 
@@ -28,11 +29,13 @@ class BaseFormatter:
     def __init__(
         self,
         to_format: dict = {},
+        formatter_fields: dict = {},
         alert: None | Alert = None,
         disabled: bool = False,
         app: App | None = None,
     ) -> None:
         self.to_format: dict = to_format
+        self.formatter_fields: dict = formatter_fields
         self.alert: Alert | None = alert
         self.formatted: dict[Text, Text] = {k: Text("") for k in self.to_format.keys()}
         self.date_format: str = config.ty_config.tygenie.get("alerts", {}).get(
@@ -140,7 +143,7 @@ class BaseFormatter:
             return Text("")
 
     def duration(self, value) -> Text:
-        created = pendulum.parse(str(self.to_format["created_at"]), tz="UTC")
+        created = pendulum.parse(str(self.formatter_fields["created_at"]), tz="UTC")
         now_utc = pendulum.now(tz="UTC")
         duration = now_utc.diff_for_humans(created, absolute=True)
         return Text(
@@ -167,18 +170,56 @@ class AlertFormatter:
             self.module = import_module(
                 f"tygenie.plugins.{self.formatter}.alerts_list_formatter"
             )
-        self.displayed_fields = getattr(self.module, self.formatter).displayed_fields
+        self.formatter_fields = getattr(self.module, self.formatter).displayed_fields
+        self.displayed_fields = self._get_final_displayed_fields()
+
+    def _get_final_displayed_fields(self):
+        displayed_fields = config.ty_config.tygenie.get("displayed_fields", {})
+        fields_methods = displayed_fields.keys()
+        if not fields_methods:
+            fields_methods = self.formatter_fields.keys()
+
+        unknown_fields = []
+        # Check if all custom fields have a corresponding method
+        # 1/ check it exists in all fields
+        # 2/ if it does not exists check the corresponding method name
+        for method in fields_methods:
+            if method in self.formatter_fields.keys():
+                continue
+            if self.formatter and str(method).lower() in dir(
+                getattr(self.module, self.formatter)
+            ):
+                continue
+            unknown_fields.append(method)
+
+        if unknown_fields:
+            ty_logger.logger.log(
+                f"You defined some unknown fields that could not be displayed, they will be ignored: {unknown_fields}"
+            )
+
+        final_fields = [f for f in fields_methods if f not in unknown_fields]
+        final_displayed_fields = {k: displayed_fields[k] for k in final_fields}
+
+        return final_displayed_fields
 
     def format(self) -> dict:
         to_format = {}
+        formatter_fields = {}
         if self.formatter is not None:
-            for f in getattr(self.module, self.formatter).displayed_fields.keys():
+            for f in self.formatter_fields.keys():
                 if not hasattr(self.alert, f):
-                    to_format[f] = ""
+                    if f in self.displayed_fields:
+                        to_format[f] = ""
+                    formatter_fields[f] = ""
                     continue
-                to_format[f] = getattr(self.alert, f)
+                if f in self.displayed_fields:
+                    to_format[f] = getattr(self.alert, f)
+                formatter_fields[f] = getattr(self.alert, f)
             return getattr(self.module, self.formatter)(
-                to_format, alert=self.alert, app=self.app
+                to_format=to_format,
+                formatter_fields=formatter_fields,
+                alert=self.alert,
+                app=self.app,
             ).format()
         else:
             return {}

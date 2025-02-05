@@ -56,15 +56,15 @@ class SettingsScreen(TyScreen):
         )
         yield Footer()
 
-    def action_save_config(self):
-        self.save_config()
+    async def action_save_config(self):
+        await self.save_config()
 
     def action_activate_alerts_screen(self):
         if self.has_changed:
             self.post_message(self.SettingsUpdated())
         self.app.switch_screen(f"{consts.ALERTS_SCREEN_NAME}")
 
-    def _save_config(self):
+    async def _save_config(self):
         textarea = self.query_one("#settings_textarea", TextArea)
         try:
             original_json = json.loads(self.original_text)
@@ -90,17 +90,17 @@ class SettingsScreen(TyScreen):
                 opsgenie.reload()
                 logger.reload()
 
-                self.app.reload()
+                await self.app.reload()
             except Exception as e:
                 self.notify(severity="error", message=f"Failed to relaod app: {e}")
 
-    def save_config(self):
-        self._save_config()
+    async def save_config(self):
+        await self._save_config()
         if config.ty_config.sample_copied:
             self.notify(f"Sample copied: {config.ty_config.sample_copied}")
             # As it is the first config, go back to alerts list
             self.action_activate_alerts_screen()
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":
-            self.save_config()
+            await self.save_config()
