@@ -29,7 +29,6 @@ import tygenie.config as config
 import tygenie.opsgenie as opsgenie
 from tygenie import consts
 from tygenie.screen import TyScreen
-from tygenie.screens.settings import SettingsScreen
 from tygenie.widgets.alert_actions import AlertActionContainer
 from tygenie.widgets.alert_details import (
     AlertDetails,
@@ -266,10 +265,8 @@ class AlertsScreen(TyScreen):
         super().__init__()
         self.app: "TygenieApp"
 
-    @on(SettingsScreen.SettingsUpdated)
-    async def recompose_app(self):
+    async def reload(self):
         await self.recompose()
-        self.lookup_data()
 
     def on_screen_resume(self):
         self.lookup_data()
@@ -515,8 +512,15 @@ class AlertsScreen(TyScreen):
             for index, alert in enumerate(alerts):
                 key = f"data_table_{alert.id}"
                 self.app.alerts_list_formatter.alert = alert
+                formatted_values = self.app.alerts_list_formatter.format()
                 table.add_row(
-                    *tuple(self.app.alerts_list_formatter.format().values()), key=key
+                    *tuple(
+                        [
+                            formatted_values[f]
+                            for f in self.app.alerts_list_formatter.displayed_fields.keys()
+                        ]
+                    ),
+                    key=key,
                 )
                 # If this is the alert selected before the update, keep coordinates
                 # to be the one selected

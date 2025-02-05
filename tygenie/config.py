@@ -112,6 +112,11 @@ class Config:
             .get("palette", "ctrl+p")
         )
 
+        # Add displayed_field as a key/value structure
+        self.config.get("tygenie", {})["displayed_fields"] = self.config.get(
+            "tygenie", {}
+        ).get("displayed_fields", {})
+
         self.save(self.config)
 
 
