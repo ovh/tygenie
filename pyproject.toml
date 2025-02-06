@@ -2,34 +2,22 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build.force-include]
-"assets" = "tygenie/assets"
+[tool.hatch.build.targets.wheel]
+only-include = ["tygenie-plugins-ovh-pci/plugins"]
+
+[tool.hatch.build.targets.wheel.sources]
+"tygenie-plugins-ovh-pci/plugins" = "tygenie/plugins"
 
 [project]
-name = "tygenie"
-license = { file = "LICENSE" }
-version = "1.7.1"
+name = "tygenie-plugins-ovh-pci"
+version = "0.1"
 authors = [
   { name = "Pierre-Samuel Le Stang", email = "pierre-samuel.le-stang@corp.ovh.com" },
 ]
-description = "Tygenie is an Opsgenie TUI application"
+description = "OVHCloud tygenie PCI's team plugin"
 readme = "README.md"
-dependencies = [
-  "urllib3==2.2.2",
-  "attrs==24.2.0",
-  "desktop_notifier==5.0.1",
-  "httpx==0.27.2",
-  "markdownify==0.13.1",
-  "pendulum==3.0.0",
-  "python_dateutil==2.9.0.post0",
-  "rich==13.9.4",
-  "textual[syntax]==1.0.0",
-  "udatetime==0.0.17",
-]
+dependencies = ["tygenie>=1.7.1"]
 requires-python = ">=3.11"
 
-[project.scripts]
-tygenie = "tygenie.app:main"
-
 [project.urls]
-"Homepage" = "https://github.com/ovh/tygenie"
+"Homepage" = "https://stash.ovh.net/projects/CLOUD/repos/tygenie/browse?at=refs%2Fheads%2Fpci"
