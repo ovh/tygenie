@@ -29,7 +29,7 @@ class AlertActionContainer(Widget):
 
     def compose(self) -> ComposeResult:
         self.border_title = "Actions"
-        self.border_subtitle = f"[orange1]Version:[/orange1] [b]{VERSION}[/b]"
+        self.border_subtitle = f"[$accent]Version:[/] [b]{VERSION}[/b]"
         with Horizontal(id="alert_action_horizontal_container"):
             yield TagValueInput(id="tag_value_container")
             yield Button(
