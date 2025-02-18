@@ -1,5 +1,6 @@
 from rich.text import Text
 from textual.containers import VerticalScroll
+from textual.content import Content
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
@@ -26,10 +27,10 @@ class AlertDetailsTabbedContent(TygenieTabbedContent):
 
 class AlertDetailTitle(Static):
 
-    title = reactive(Text())
+    title = reactive(Content(""))
 
     def watch_title(self):
-        self.update(self.title)
+        self.update(Content.from_markup("$title", title=self.title))
 
 
 class AlertDetails(Widget):
@@ -95,7 +96,7 @@ class AlertDetails(Widget):
                 with VerticalScroll():
                     yield Pretty(None, id="pretty_raw_alert_detail")
 
-    class UpdateAlertDetailsTitle(Message):
+    class UpdateAlertDetails(Message):
 
         def __init__(self, alert) -> None:
             self.alert = alert.data
@@ -113,6 +114,6 @@ class AlertDetails(Widget):
 
         if alert is not None:
             # Update alert_detail_title
-            self.post_message(self.UpdateAlertDetailsTitle(alert=alert))
+            self.post_message(self.UpdateAlertDetails(alert=alert))
         else:
             self.notify(severity="error", message="Unable to get alert detail")

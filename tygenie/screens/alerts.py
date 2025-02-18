@@ -10,6 +10,7 @@ from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Vertical
+from textual.content import Content
 from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
@@ -273,17 +274,17 @@ class AlertsScreen(TyScreen):
 
     def _update_paging_label(self):
         label = (
-            f"[orange1]Page:[/orange1] [b]{self.page}/{ceil(self.total_alerts / self.opsgenie_query.limit)}[/b]"
-            f" | [orange1]Displayed:[/orange1] [b]{self.first_alert_count}-{self.last_alert_count}/{self.total_alerts}[/b]"
-            f' | [orange1]Filter:[/orange1] [b]{config.ty_config.tygenie.get("filters", "")[self.opsgenie_query.current_filter]["description"]}[/b]'
+            f"[$accent]Page:[/] [b]{self.page}/{ceil(self.total_alerts / self.opsgenie_query.limit)}[/b]"
+            f" | [$accent]Displayed:[/] [b]{self.first_alert_count}-{self.last_alert_count}/{self.total_alerts}[/b]"
+            f' | [$accent]Filter:[/] [b]{config.ty_config.tygenie.get("filters", "")[self.opsgenie_query.current_filter]["description"]}[/b]'
         )
 
         if config.ty_config.opsgenie.get("on_call_schedule_ids"):
-            label += (
-                f" | [orange1]OnCall:[/orange1] [b]{self.current_on_call_member}[/b]"
-            )
+            label += f" | [$accent]OnCall:[/] [b]{self.current_on_call_member}[/b]"
 
-        self.query_one("#alerts_list_switcher", ContentSwitcher).border_subtitle = label
+        self.query_one("#alerts_list_switcher", ContentSwitcher).border_subtitle = (
+            Content.from_markup(label)
+        )
 
     def update_paging_label(self):
         try:
@@ -815,10 +816,12 @@ class AlertsScreen(TyScreen):
         except CellDoesNotExist:
             return None
 
-    @on(AlertDetails.UpdateAlertDetailsTitle)
+    @on(AlertDetails.UpdateAlertDetails)
     def _update_alert_details(self, event):
         alert_detail_title = self.query_one("#alert_details_title", AlertDetailTitle)
-        alert_detail_title.title = event.alert.message
+        alert_detail_title.title = Content.from_markup(
+            "$message", message=event.alert.message
+        )
 
         def set_class_handler(css_class):
             classes = ["open", "closed", "acked"]
