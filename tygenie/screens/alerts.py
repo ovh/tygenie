@@ -49,7 +49,7 @@ class AlertsScreen(TyScreen):
 
     DEFAULT_CSS = """\
     AlertsScreen{
-        & #no_alerts_list_label {
+        & #no_alerts_list_label_container {
             height: 1fr;
             hatch: right $surface-lighten-1 70%;
         }
@@ -294,6 +294,23 @@ class AlertsScreen(TyScreen):
         else:
             self._update_paging_label()
 
+    def _update_no_alert_label(self):
+        filter = config.ty_config.tygenie.get("filters", "")[
+            self.opsgenie_query.current_filter
+        ]
+        content = f"There is no alert for filter '[b]{filter['description']}[/b]' ([i]{filter['filter']}[/i])"
+        self.query_one("#no_alerts_list_label", Label).update(
+            content=Content.from_markup(content)
+        )
+
+    def update_no_alert_label(self):
+        try:
+            self.query_one("#no_alerts_list_label", Label)
+        except NoMatches:
+            pass
+        else:
+            self._update_no_alert_label()
+
     def watch_page(self):
         self.update_paging_label()
 
@@ -302,6 +319,7 @@ class AlertsScreen(TyScreen):
 
     def watch_total_alerts(self):
         self.update_paging_label()
+        self.update_no_alert_label()
 
     def watch_lookup_count_rows(self):
         self.update_paging_label()
@@ -346,9 +364,10 @@ class AlertsScreen(TyScreen):
         with content_switcher:
             yield CenterMiddle(
                 Label(
-                    f"There is no alert for filter {self.opsgenie_query.current_filter}"
+                    "",
+                    id="no_alerts_list_label",
                 ),
-                id="no_alerts_list_label",
+                id="no_alerts_list_label_container",
             )
             with Vertical(id="alerts_container"):
                 yield TygenieDataTable(id="alerts_data_table")
@@ -459,7 +478,7 @@ class AlertsScreen(TyScreen):
             )
 
             if alerts is None:
-                alerts_list_switcher.current = "no_alerts_list_label"
+                alerts_list_switcher.current = "no_alerts_list_label_container"
                 return
 
             if not alerts.data and (previous or next):
@@ -468,7 +487,7 @@ class AlertsScreen(TyScreen):
 
             if not alerts.data and not (previous or next):
                 # there is no alert, switch content
-                alerts_list_switcher.current = "no_alerts_list_label"
+                alerts_list_switcher.current = "no_alerts_list_label_container"
                 return
 
             table = self.query_one("#alerts_data_table", TygenieDataTable)
