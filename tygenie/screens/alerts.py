@@ -269,6 +269,7 @@ class AlertsScreen(TyScreen):
     async def reload(self):
         await self.recompose()
 
+    @work(exclusive=True, exit_on_error=True, thread=True)
     def on_screen_resume(self):
         self.lookup_data()
 
@@ -609,10 +610,10 @@ class AlertsScreen(TyScreen):
                 )
             )
 
-    def on_mount(self) -> None:
+    @work(exclusive=True, exit_on_error=True, thread=True)
+    async def on_mount(self) -> None:
         self.lookup_data()
-        refresh_period = config.ty_config.tygenie.get("refresh_period", 300)
-        refresh_period = max(60, refresh_period)
+        refresh_period = max(60, config.ty_config.tygenie.get("refresh_period", 300))
         self.set_interval(refresh_period, self.lookup_data)
 
     async def _lookup_data(self, filter_name=None, previous=False, next=False):
