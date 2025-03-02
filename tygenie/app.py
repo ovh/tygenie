@@ -5,12 +5,10 @@ from desktop_notifier import DesktopNotifier
 from textual import on
 from textual.app import App
 from textual.binding import Binding
-from textual.widgets import Footer
 
 import tygenie.config as config
 import tygenie.logger as logger
 import tygenie.opsgenie as opsgenie
-from tygenie.screen import TyScreen
 import tygenie.screens.add_note
 import tygenie.screens.alerts
 import tygenie.screens.settings
