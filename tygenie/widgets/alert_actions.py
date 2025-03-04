@@ -62,13 +62,12 @@ class AlertActionContainer(Widget):
     class CheckTygenieNewVersion(Message):
         """A message"""
 
-    @work(exclusive=True, exit_on_error=True, thread=True)
     async def on_mount(self):
-        self.send_check_tygenie_verion_message()
+        self.send_check_tygenie_version_message()
         # Check every 6 hours for new version
-        self.set_interval(6 * 60 * 60, self.send_check_tygenie_verion_message)
+        self.set_interval(6 * 60 * 60, self.send_check_tygenie_version_message)
 
-    def send_check_tygenie_verion_message(self):
+    def send_check_tygenie_version_message(self):
         self.post_message(self.CheckTygenieNewVersion())
 
     def on_button_pressed(self, event: Button.Pressed):

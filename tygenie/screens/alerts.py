@@ -270,8 +270,8 @@ class AlertsScreen(TyScreen):
         await self.recompose()
 
     @work(exclusive=True, exit_on_error=True, thread=True)
-    def on_screen_resume(self):
-        self.lookup_data()
+    async def on_screen_resume(self):
+        await self.lookup_data()
 
     def _update_paging_label(self):
         label = (
@@ -610,11 +610,13 @@ class AlertsScreen(TyScreen):
                 )
             )
 
-    @work(exclusive=True, exit_on_error=True, thread=True)
     async def on_mount(self) -> None:
-        self.lookup_data()
+        self.send_lookup_data()
         refresh_period = max(60, config.ty_config.tygenie.get("refresh_period", 300))
-        self.set_interval(refresh_period, self.lookup_data)
+        self.set_interval(refresh_period, self.send_lookup_data)
+
+    def send_lookup_data(self):
+        self.post_message(self.LookupDataWithDelay(delay=0))
 
     async def _lookup_data(self, filter_name=None, previous=False, next=False):
         # Do not lookup in case we have the modal AddNote screen pop up to
@@ -656,7 +658,6 @@ class AlertsScreen(TyScreen):
                 urgency=getattr(Urgency, urgency),
             )
 
-    @work(exclusive=True, exit_on_error=True, thread=True)
     async def lookup_data(self, filter_name=None):
         await self._lookup_data(filter_name=filter_name)
 
@@ -668,11 +669,11 @@ class AlertsScreen(TyScreen):
         await self._lookup_data()
 
     # Method useed for manual refresh
-    def action_manual_refresh(self):
+    async def action_manual_refresh(self):
         self.notify("Refreshing data...")
-        self.lookup_data()
+        await self.lookup_data()
 
-    def action_lookup_data(self, filter_name=None):
+    async def action_lookup_data(self, filter_name=None):
         # Refreshing because want to filter on an other filter
         if filter_name is not None:
             self.notify(
@@ -680,7 +681,7 @@ class AlertsScreen(TyScreen):
                 title="Filtering alerts",
                 severity="information",
             )
-        self.lookup_data(filter_name=filter_name)
+        await self.lookup_data(filter_name=filter_name)
 
     @on(NotifyMessage)
     def notify_message(self, message):
