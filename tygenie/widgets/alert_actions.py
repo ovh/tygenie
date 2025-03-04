@@ -67,6 +67,7 @@ class AlertActionContainer(Widget):
         # Check every 6 hours for new version
         self.set_interval(6 * 60 * 60, self.send_check_tygenie_version_message)
 
+    @work(exclusive=True, exit_on_error=True, thread=True)
     def send_check_tygenie_version_message(self):
         self.post_message(self.CheckTygenieNewVersion())
 
