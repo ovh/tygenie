@@ -394,7 +394,7 @@ class AlertsScreen(TyScreen):
         open_detail_alert_on_enter = config.ty_config.tygenie.get(
             "open_detail_alert_on_enter", False
         )
-        if not open_detail_alert_on_enter:
+        if not self.maximized and not open_detail_alert_on_enter:
             self.open_detail_and_note_alert()
 
     def on_data_table_row_selected(self, event):
@@ -403,7 +403,7 @@ class AlertsScreen(TyScreen):
         open_detail_alert_on_enter = config.ty_config.tygenie.get(
             "open_detail_alert_on_enter", False
         )
-        if not open_detail_alert_on_enter:
+        if not self.maximized and not open_detail_alert_on_enter:
             self.open_detail_and_note_alert()
 
     @work(exclusive=True, exit_on_error=True, thread=False)
