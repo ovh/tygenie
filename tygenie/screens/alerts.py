@@ -22,6 +22,7 @@ from textual.widgets import (
     Label,
     Markdown,
     Pretty,
+    Select,
 )
 from textual.widgets._data_table import CellDoesNotExist
 from udatetime import from_string as dtfstr
@@ -274,10 +275,20 @@ class AlertsScreen(TyScreen):
         await self.lookup_data()
 
     def _update_paging_label(self):
+        if self.opsgenie_query.search_identifier:
+            filter = self.opsgenie_query.current_filter
+        else:
+            filter = config.ty_config.tygenie.get("filters", "")[
+                self.opsgenie_query.current_filter
+            ]["description"]
+
+        page = self.page if self.total_alerts > 0 else 0
+        first_alert_count = self.first_alert_count if self.total_alerts > 0 else 0
+
         label = (
-            f"[$accent]Page:[/] [b]{self.page}/{ceil(self.total_alerts / self.opsgenie_query.limit)}[/b]"
-            f" | [$accent]Displayed:[/] [b]{self.first_alert_count}-{self.last_alert_count}/{self.total_alerts}[/b]"
-            f' | [$accent]Filter:[/] [b]{config.ty_config.tygenie.get("filters", "")[self.opsgenie_query.current_filter]["description"]}[/b]'
+            f"[$accent]Page:[/] [b]{page}/{ceil(self.total_alerts / self.opsgenie_query.limit)}[/b]"
+            f" | [$accent]Displayed:[/] [b]{first_alert_count}-{self.last_alert_count}/{self.total_alerts}[/b]"
+            f" | [$accent]Filter:[/] [b]{filter}[/b]"
         )
 
         if config.ty_config.opsgenie.get("on_call_schedule_ids"):
@@ -296,10 +307,16 @@ class AlertsScreen(TyScreen):
             self._update_paging_label()
 
     def _update_no_alert_label(self):
-        filter = config.ty_config.tygenie.get("filters", "")[
-            self.opsgenie_query.current_filter
-        ]
-        content = f"There is no alert for filter '[b]{filter['description']}[/b]' ([i]{filter['filter']}[/i])"
+
+        if not self.opsgenie_query.search_identifier:
+            filter = config.ty_config.tygenie.get("filters", "")[
+                self.opsgenie_query.current_filter
+            ]
+            content = f"There is no alert for filter '[b]{filter['description']}[/b]' ([i]{filter['filter']}[/i])"
+        else:
+            filter = self.opsgenie_query.current_filter
+            content = f"There is no alert for filter '[b]{filter}[/]'"
+
         self.query_one("#no_alerts_list_label", Label).update(
             content=Content.from_markup(content)
         )
@@ -312,30 +329,33 @@ class AlertsScreen(TyScreen):
         else:
             self._update_no_alert_label()
 
-    def watch_page(self):
-        self.update_paging_label()
-
-    def watch_current_filter(self):
-        self.update_paging_label()
-
-    def watch_total_alerts(self):
+    def update_label(self):
         self.update_paging_label()
         self.update_no_alert_label()
 
+    def watch_page(self):
+        self.update_label()
+
+    def watch_current_filter(self):
+        self.update_label()
+
+    def watch_total_alerts(self):
+        self.update_label()
+
     def watch_lookup_count_rows(self):
-        self.update_paging_label()
+        self.update_label()
 
     def watch_opsgenie_query_offset(self):
-        self.update_paging_label()
+        self.update_label()
 
     def watch_first_alert_count(self):
-        self.update_paging_label()
+        self.update_label()
 
     def watch_last_alert_count(self):
-        self.update_paging_label()
+        self.update_label()
 
     def watch_current_on_call_member(self):
-        self.update_paging_label()
+        self.update_label()
 
     def _set_custom_bindings(self):
         self.app.set_keymap(
@@ -457,14 +477,18 @@ class AlertsScreen(TyScreen):
         new_filter = False
 
         if filter_name is None:
-            filter_name = self.opsgenie_query.current_filter
+            if self.opsgenie_query.search_identifier:
+                filter_name = self.opsgenie_query.search_identifier[0]
+            else:
+                filter_name = self.opsgenie_query.current_filter
         elif filter_name != self.opsgenie_query.current_filter:
             new_filter = True
             # reset offset in case we are changing filter
             self.opsgenie_query.offset = 0
+            # reset search_identifier
+            self.opsgenie_query.search_identifier = None
 
-        if filter_name is not None:
-            parameters = self.opsgenie_query.get(filter_name=filter_name)
+        parameters = self.opsgenie_query.get(filter_name=filter_name)
 
         if previous is True:
             parameters = self.opsgenie_query.get_previous()
@@ -489,6 +513,21 @@ class AlertsScreen(TyScreen):
             if not alerts.data and not (previous or next):
                 # there is no alert, switch content
                 alerts_list_switcher.current = "no_alerts_list_label_container"
+                self.query_one(
+                    "#alert_details_details_switcher", ContentSwitcher
+                ).current = "no_alert_details_label"
+                self.query_one(
+                    "#alert_details_description_switcher", ContentSwitcher
+                ).current = "no_alert_description_label"
+                self.query_one(
+                    "#alert_details_tags_switcher", ContentSwitcher
+                ).current = "no_alert_tags_label"
+                self.query_one(
+                    "#alert_details_raw_switcher", ContentSwitcher
+                ).current = "no_alert_raw_label"
+                self.query_one("#alert_notes_switcher", ContentSwitcher).current = (
+                    "no_note_label"
+                )
                 return
 
             table = self.query_one("#alerts_data_table", TygenieDataTable)
@@ -583,7 +622,7 @@ class AlertsScreen(TyScreen):
 
         if alerts is not None:
             _update_data_table(alerts)
-            self._update_paging_label()
+            self.update_paging_label()
             self.lookup_count_rows = len(alerts.data)
             if not len(alerts.data) and (next or previous):
                 pass
@@ -676,6 +715,8 @@ class AlertsScreen(TyScreen):
     async def action_lookup_data(self, filter_name=None):
         # Refreshing because want to filter on an other filter
         if filter_name is not None:
+            # Reset the saved search if it was previously used
+            self.query_one("#saved_searches", Select).value = Select.BLANK
             self.notify(
                 f"Refreshing data with filter '{filter_name}'",
                 title="Filtering alerts",
@@ -877,7 +918,6 @@ class AlertsScreen(TyScreen):
             for key, value in sorted(event.alert.details.additional_properties.items()):
                 alert_details.add_row(*tuple([key, value]))
 
-            # alert_details.update(event.alert.details)
             alert_details_details_swicher.current = "alert_detail_pretty_container"
         else:
             alert_details_details_swicher.current = "no_alert_details_label"
@@ -907,8 +947,15 @@ class AlertsScreen(TyScreen):
         else:
             alert_details_description_swicher.current = "no_alert_description_label"
 
-        pretty = self.query_one("#pretty_raw_alert_detail", Pretty)
-        pretty.update(event.alert)
+        alert_details_raw_swicher = self.query_one(
+            "#alert_details_raw_switcher", ContentSwitcher
+        )
+        if event.alert:
+            pretty = self.query_one("#pretty_raw_alert_detail", Pretty)
+            pretty.update(event.alert)
+            alert_details_raw_swicher.current = "alert_raw_pretty_container"
+        else:
+            alert_details_raw_swicher.current = "no_alert_raw_label"
 
     @on(AlertNotes.UpdateAlertNotes)
     def _update_alert_notes(self, event):
@@ -1056,3 +1103,11 @@ class AlertsScreen(TyScreen):
                 self.post_message(self.LookupDataWithDelay(delay=1))
 
         self.app.push_screen("add_note", _add_note)
+
+    @on(AlertActionContainer.LookupDataWithSearchIdentifier)
+    @work(exclusive=True, exit_on_error=False, thread=False)
+    async def lookup_with_search(
+        self, message: AlertActionContainer.LookupDataWithSearchIdentifier
+    ):
+        self.opsgenie_query.search_identifier = message.search_identifier
+        self.send_lookup_data()

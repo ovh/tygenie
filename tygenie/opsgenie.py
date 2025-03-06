@@ -17,13 +17,16 @@ from tygenie.opsgenie_rest_api_client.api.alert import (
     get_alert,
     list_alerts,
     list_notes,
+    list_saved_searches,
     remove_tags,
     un_acknowledge_alert,
+    get_saved_search,
 )
 from tygenie.opsgenie_rest_api_client.api.schedule import list_schedules
 from tygenie.opsgenie_rest_api_client.api.who_is_on_call import (
     get_on_calls,
 )
+from tygenie.opsgenie_rest_api_client.models import list_saved_searches_response
 from tygenie.opsgenie_rest_api_client.models.add_tags_to_alert_payload import (
     AddTagsToAlertPayload,
 )
@@ -55,7 +58,11 @@ class OpsGenie:
         return await self.api_call(get_info)
 
     async def count_alerts(self, parameters: dict = {}):
-        params = {"query": parameters.get("query", "")}
+        params = {
+            "query": parameters.get("query", None),
+            "search_identifier": parameters.get("search_identifier", None),
+            "search_identifier_type": "id",
+        }
         return await self.api_call(count_alerts, **params)
 
     async def list_alerts(self, limit: int = 50, parameters: dict = {}):
@@ -63,11 +70,17 @@ class OpsGenie:
         params.update(parameters)
         return await self.api_call(list_alerts, **params)
 
+    async def get_saved_search(self, parameters: dict = {}):
+        return await self.api_call(get_saved_search, **parameters)
+
     async def get_alert(self, parameters: dict = {}):
         return await self.api_call(get_alert, **parameters)
 
     async def get_alert_notes(self, parameters: dict = {}):
         return await self.api_call(list_notes, **parameters)
+
+    async def list_saved_searches(self, parameters: dict = {}):
+        return await self.api_call(list_saved_searches, **parameters)
 
     async def ack_alert(self, parameters: dict = {}, note: str = ""):
         body = AlertActionPayload(user=self.username, source=self.source, note=note)
@@ -122,7 +135,6 @@ class OpsGenie:
 
     async def api_call(self, resource, **kwargs):
 
-        response = None
         try:
             ty_logger.logger.log(f"API call {resource.__name__} with params {kwargs}")
             response = await getattr(resource, "asyncio_detailed")(
@@ -159,7 +171,8 @@ class Query:
         self.query: str = "status:open"
         self.offset: int = 0
         self.current_filter: str | None = None
-        self.current: dict = self.get()
+        self.search_identifier: str | None = None
+        self._current: dict = self.get()
 
     @property
     def limit(self) -> int:
@@ -173,13 +186,26 @@ class Query:
         )
         return self._limit
 
-    def _get_query(self, filter_name: str | None = None) -> str:
+    @property
+    def current(self) -> dict:
+        self._current = self.get()
+        return self._current
+
+    @current.setter
+    def current(self, value: dict):
+        self._current = value
+        return self._current
+
+    def _get_query(self, filter_name: str | None = None) -> dict:
         query: str = ""
         if filter_name is None:
             if self.current_filter is not None:
                 filter_name = self.current_filter
             else:
                 filter_name = config.ty_config.tygenie.get("default_filter", None)
+
+        if self.search_identifier:
+            filter_name = self.search_identifier[0]
 
         if filter_name is not None:
             filters: dict = config.ty_config.tygenie.get("filters", {})
@@ -191,17 +217,20 @@ class Query:
 
         self.current_filter = filter_name
 
-        return query
+        if self.search_identifier:
+            return {"search_identifier": self.search_identifier[1]}
+        else:
+            return {"query": query}
 
     def get(self, filter_name: str | None = None, parameters: dict = {}) -> dict:
-        query: str = self._get_query(filter_name=filter_name)
+
         params: dict = {
             "limit": self.limit,
             "sort": self.sort,
             "order": self.order,
             "offset": self.offset,
-            "query": query,
-        }
+        } | self._get_query(filter_name=filter_name)
+
         return params | parameters
 
     def current_page(self) -> int:

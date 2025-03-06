@@ -117,6 +117,12 @@ class Config:
             "tygenie", {}
         ).get("displayed_fields", {})
 
+        # Add enable_saved_searches feature flip
+        # Set default value to True
+        self.config.get("tygenie", {})["enable_saved_searches"] = self.config.get(
+            "tygenie", {}
+        ).get("enable_saved_searches", True)
+
         self.save(self.config)
 
 

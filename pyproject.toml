@@ -24,7 +24,7 @@ dependencies = [
   "python_dateutil==2.9.0.post0",
   "rich==13.9.4",
   "semver==3.0.1",
-  "textual[syntax]==2.0.4",
+  "textual[syntax]==2.1.2",
   "udatetime==0.0.17",
 ]
 requires-python = ">=3.11"
