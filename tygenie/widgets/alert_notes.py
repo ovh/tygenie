@@ -23,7 +23,7 @@ class AlertNotes(Widget):
         content_switcher = ContentSwitcher(initial=None, id="alert_notes_switcher")
         with content_switcher:
             yield CenterMiddle(
-                Label("The alert doesn't have a note"), id="no_note_label"
+                Label("There is no alert note to display"), id="no_note_label"
             )
             with VerticalScroll(id="alert_notes_markdown_container"):
                 md = Markdown(None, name="Notes", id="md_alert_note")

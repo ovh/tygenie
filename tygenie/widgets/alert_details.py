@@ -1,4 +1,3 @@
-from rich.text import Text
 from textual.containers import VerticalScroll
 from textual.content import Content
 from textual.message import Message
@@ -36,7 +35,7 @@ class AlertDetailTitle(Static):
 class AlertDetails(Widget):
 
     DEFAULT_CSS = """\
-    RawAlertDetails {
+    AlertDetails {
         & #no_alert_details_label {
             height: 1fr;
             hatch: right $surface-lighten-1 70%;
@@ -48,6 +47,11 @@ class AlertDetails(Widget):
         }
 
         & #no_alert_tags_label {
+            height: 1fr;
+            hatch: right $surface-lighten-1 70%;
+        }
+
+        & #no_alert_raw_label {
             height: 1fr;
             hatch: right $surface-lighten-1 70%;
         }
@@ -70,7 +74,7 @@ class AlertDetails(Widget):
             with TabPane("Details", id="tabpane-details"):
                 with ContentSwitcher(initial=None, id="alert_details_details_switcher"):
                     yield CenterMiddle(
-                        Label("The alert doesn't have detail"),
+                        Label("There is no detail to display"),
                         id="no_alert_details_label",
                     )
                     with VerticalScroll(id="alert_detail_pretty_container"):
@@ -78,7 +82,7 @@ class AlertDetails(Widget):
             with TabPane("Tags", id="tabpane-tags"):
                 with ContentSwitcher(initial=None, id="alert_details_tags_switcher"):
                     yield CenterMiddle(
-                        Label("The alert doesn't have a tag"), id="no_alert_tags_label"
+                        Label("There is not tag to display"), id="no_alert_tags_label"
                     )
                     with VerticalScroll(id="alert_tags_container"):
                         yield Tags(names=[], id="alert_tags_checkboxes")
@@ -87,14 +91,19 @@ class AlertDetails(Widget):
                     initial=None, id="alert_details_description_switcher"
                 ):
                     yield CenterMiddle(
-                        Label("The alert doesn't have description"),
+                        Label("There is no description to display"),
                         id="no_alert_description_label",
                     )
                     with VerticalScroll(id="alert_description_md_container"):
                         yield Markdown(None, id="pretty_alert_description")
             with TabPane("RAW", id="tabpane_raw"):
-                with VerticalScroll():
-                    yield Pretty(None, id="pretty_raw_alert_detail")
+                with ContentSwitcher(initial=None, id="alert_details_raw_switcher"):
+                    yield CenterMiddle(
+                        Label("There is no raw data to display"),
+                        id="no_alert_raw_label",
+                    )
+                    with VerticalScroll(id="alert_raw_pretty_container"):
+                        yield Pretty(None, id="pretty_raw_alert_detail")
 
     class UpdateAlertDetails(Message):
 

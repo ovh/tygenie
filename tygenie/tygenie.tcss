@@ -134,22 +134,30 @@
   width: auto;
 }
 
+#alert_action_horizontal_container > Button:hover {
+  background: $primary;
+}
+
+
 #open_in_webbrowser {
   height: auto;
   width: auto;
   margin-left: 1;
+  border: blank;
 }
 
 #add_note {
   height: auto;
   width: auto;
-  margin: 0 0 0 1;
+  margin-left: 1;
+  border: blank;
 }
 
 #tag_alert {
   height: auto;
   width: auto;
   margin-left: 1;
+  border: blank;
 }
 
 #tag_value_container {
@@ -165,9 +173,9 @@
 #tag_label {
   height: auto;
   content-align: right middle;
-  padding-top: 1;
   width: auto;
   color: $text-muted;
+  border: blank;
 }
 
 #tag_input {
@@ -183,6 +191,10 @@
   height: 1fr;
 }
 
+#saved_searches {
+  height: auto;
+  width: 60;
+}
 
 /* Add note screen */
 AddNoteScreen {
