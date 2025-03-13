@@ -147,7 +147,7 @@ class OpsGenie:
             return response.parsed
         except Exception as e:
             ty_logger.logger.log(f"Exception in API call: {e}")
-            return response
+            return None
 
     def _load_config(self):
         self.api_key = config.ty_config.opsgenie.get("api_key", "")
