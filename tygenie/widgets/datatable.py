@@ -7,17 +7,29 @@ from textual.widgets import DataTable
 class TygenieDataTable(DataTable, inherit_bindings=False):
     BINDINGS = [
         Binding(
-            "G,pageup",
+            "g,pageup",
             "cursor_up_or_previous_page",
             "Go on first alert or load previous page",
             show=False,
         ),
         Binding(
-            "g,pagedown",
+            "G,pagedown",
             "cursor_down_or_next_page",
             "Go on last alert or load next page",
             show=False,
         ),
+        Binding(
+            "j",
+            "cursor_down",
+            "Go down",
+             show=False,
+        ),
+        Binding(
+             "k",
+             "cursor_up",
+             "Go up",
+             show=False,
+         ),
     ]
 
     class NextPage(Message):
