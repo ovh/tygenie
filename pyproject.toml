@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 [project]
 name = "tygenie"
 license = { file = "LICENSE" }
-version = "1.10.0"
+version = "1.11.0"
 authors = [
   { name = "Pierre-Samuel Le Stang", email = "pierre-samuel.le-stang@corp.ovh.com" },
 ]
