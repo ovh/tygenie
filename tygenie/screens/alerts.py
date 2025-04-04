@@ -6,6 +6,8 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 from desktop_notifier import Urgency
+from rich.markup import escape
+from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -787,7 +789,9 @@ class AlertsScreen(TyScreen):
             return
 
         message = self._get_cursor_message()
-        self.notify(f"Acking alert\n{message}")
+        self.escaped_notify(
+            f"Acking alert\n{message}",
+        )
         await opsgenie.client.api.ack_alert(
             parameters={"identifier": opsgenie_id},
             note=self._get_note_on_action("ack"),
@@ -814,7 +818,7 @@ class AlertsScreen(TyScreen):
             return
 
         message = self._get_cursor_message()
-        self.notify(f"Unacking alert\n{message} ...")
+        self.escaped_notify(f"Unacking alert\n{message} ...")
         await opsgenie.client.api.unack_alert(
             parameters={"identifier": opsgenie_id},
             note=self._get_note_on_action("unack"),
@@ -1030,7 +1034,7 @@ class AlertsScreen(TyScreen):
             return
 
         message = self._get_cursor_message()
-        self.notify(f'Adding tag "{tag_value}" on alert: \n{message}')
+        self.escaped_notify(f'Adding tag "{tag_value}" on alert: \n{message}')
         note = f"{self._get_note_on_action('tag')}".format(tag=tag_value)
         await opsgenie.client.api.tag_alert(
             parameters={"identifier": opsgenie_id}, tags=[tag_value], note=note
@@ -1053,7 +1057,7 @@ class AlertsScreen(TyScreen):
             return
 
         message = self._get_cursor_message()
-        self.notify(f'Removing tag "{tag.value}" on alert: \n{message}')
+        self.escaped_notify(f'Removing tag "{tag.value}" on alert: \n{message}')
         note = f"{self._get_note_on_action('untag')}".format(tag=tag.value)
         await opsgenie.client.api.remove_tag_alert(
             parameters={"identifier": opsgenie_id}, tags=[tag.value], note=note
@@ -1069,7 +1073,7 @@ class AlertsScreen(TyScreen):
             return
 
         message = self._get_cursor_message()
-        self.notify(f'Removing tag "{tag.value}" on alert: \n{message}')
+        self.escaped_notify(f'Removing tag "{tag.value}" on alert: \n{message}')
 
         await opsgenie.client.api.remove_tag_alert(
             parameters={"identifier": opsgenie_id}, tags=[tag.value]
@@ -1111,3 +1115,15 @@ class AlertsScreen(TyScreen):
     ):
         self.opsgenie_query.search_identifier = message.search_identifier
         self.send_lookup_data()
+
+    def escaped_notify(self, message: str | Text = "", **kwargs):
+        """
+        This method escape a message before notifying it
+        It accepts str or rich.text.Text input
+        """
+        # As the message might be a rich Text object we use the plain part only
+        # of Text object and we escape the content which could contain some square brackets
+        if type(message) is str:
+            self.notify(escape(message), **kwargs)
+        elif type(message) is Text:
+            self.notify(escape(message.plain), **kwargs)
