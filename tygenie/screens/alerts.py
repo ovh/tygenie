@@ -845,7 +845,7 @@ class AlertsScreen(TyScreen):
             return
 
         message = self._get_cursor_message()
-        self.notify(f"Closing alert\n{message}...")
+        self.escaped_notify(f"Closing alert\n{message}...")
         await opsgenie.client.api.close_alert(
             parameters={"identifier": opsgenie_id},
             note=self._get_note_on_action("close"),
