@@ -15,16 +15,16 @@ authors = [
 description = "Tygenie is an Opsgenie TUI application"
 readme = "README.md"
 dependencies = [
-  "urllib3==2.2.2",
+  "urllib3==2.5.0",
   "attrs==24.2.0",
   "desktop_notifier==5.0.1",
   "httpx==0.27.2",
-  "markdownify==0.13.1",
+  "markdownify==0.14.1",
   "pendulum==3.0.0",
   "python_dateutil==2.9.0.post0",
   "rich==13.9.4",
   "semver==3.0.1",
-  "textual[syntax]==3.1.1",
+  "textual[syntax]==3.5.0",
   "udatetime==0.0.17",
 ]
 requires-python = ">=3.11"
