@@ -42,6 +42,7 @@ from tygenie.widgets.alert_details import (
 from tygenie.widgets.alert_notes import AlertNotes
 from tygenie.widgets.center_middle import CenterMiddle
 from tygenie.widgets.datatable import TygenieDataTable
+from tygenie.widgets.input import TagValueInput
 from tygenie.widgets.tags import Tags
 
 if TYPE_CHECKING:
@@ -854,6 +855,10 @@ class AlertsScreen(TyScreen):
 
     def action_post_remove_tag_alert(self):
         self.post_message(self.RemoveTagAlert())
+
+    @on(TagValueInput.TagValueChange)
+    def _take_focus_on_tag_value_change(self, message: TagValueInput.TagValueChange):
+        self.query_one("#alerts_data_table", TygenieDataTable).focus(True)
 
     def _get_cursor_rowkey(self):
         dt = self.query_one("#alerts_data_table", TygenieDataTable)
