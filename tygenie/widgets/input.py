@@ -31,4 +31,3 @@ class TagValueInput(Widget):
             )
             tag = self.query_one("#tag_input", Input)
             self.post_message(self.TagValueChange(label=tag.value))
-            self.app.query_one("#alerts_data_table").focus(True)
