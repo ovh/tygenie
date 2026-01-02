@@ -1,4 +1,5 @@
 from textual.screen import Screen
+from tygenie.custom_actions.custom_action import CustomAction
 
 
 class TyScreen(Screen):
@@ -24,3 +25,20 @@ class TyScreen(Screen):
         self._bindings.bind(
             keys, action, description, show=show, key_display=key_display
         )
+
+    def register_action(self, name: str, key: str, action: CustomAction) -> None:
+        """Register a method to run when pressing a key.
+
+        Args:
+            name: Unique name of the action.
+            key: The key that will trigger the action.
+            action: CustomAction to bind to.
+        """
+        self.bind(
+            key,
+            action=f"{name}()",
+            description=action.description,
+            key_display=key
+        )
+        self.refresh_bindings()
+        setattr(self.__class__, f"action_{name}", action.function)

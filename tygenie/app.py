@@ -1,5 +1,6 @@
 import argparse
 import os
+from importlib import import_module
 
 from desktop_notifier import DesktopNotifier
 from textual import on
@@ -47,6 +48,7 @@ class TygenieApp(App):
         )
         self.started = False
         self.load_plugins()
+        self.load_custom_actions()
 
     def load_plugins(self):
         plugins = config.ty_config.tygenie.get("plugins", {})
@@ -57,9 +59,23 @@ class TygenieApp(App):
             formatter=plugins.get("alert_description_formatter", None)
         )
 
+    def load_custom_actions(self):
+        custom_actions = config.ty_config.tygenie.get("custom_actions", {})
+
+        for custom_action_name, custom_action_config in custom_actions.items():
+            try:
+                module = import_module(f"tygenie.custom_actions.{custom_action_name}")
+            except ModuleNotFoundError as e:
+                print(f"Failure to load custom action '{custom_action_name}': {e}")
+                exit(1)
+            action = module.action(**custom_action_config.get("config", {}))
+            screen = self.get_screen(action.screen_name)
+            screen.register_action(custom_action_name, custom_action_config.get("key", ""), action)
+
     @on(tygenie.screens.settings.SettingsScreen.SettingsUpdated)
     async def reload(self):
         self.load_plugins()
+        self.load_custom_actions()
         self.refresh_bindings()
         await self.get_screen(consts.ALERTS_SCREEN_NAME).reload()
 
