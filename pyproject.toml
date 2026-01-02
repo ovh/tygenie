@@ -22,9 +22,9 @@ dependencies = [
   "markdownify==0.14.1",
   "pendulum==3.0.0",
   "python_dateutil==2.9.0.post0",
-  "rich==13.9.4",
+  "rich==14.2.0",
   "semver==3.0.1",
-  "textual[syntax]==5.0.1",
+  "textual[syntax]==6.12.0",
   "udatetime==0.0.17",
 ]
 requires-python = ">=3.11"
