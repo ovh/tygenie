@@ -719,7 +719,7 @@ class AlertsScreen(TyScreen):
         # Refreshing because want to filter on an other filter
         if filter_name is not None:
             # Reset the saved search if it was previously used
-            self.query_one("#saved_searches", Select).value = Select.BLANK
+            self.query_one("#saved_searches", Select).clear()
             self.notify(
                 f"Refreshing data with filter '{filter_name}'",
                 title="Filtering alerts",
