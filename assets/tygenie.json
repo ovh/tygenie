@@ -20,6 +20,17 @@
       "urgency": "Critical",
       "when_on_call_only": false
     },
+    "oncall_notifications": {
+      "enable": true,
+      "check_interval": 3600,
+      "notify_at_hour": 10,
+      "urgency": "Critical",
+      "triggers": {
+        "one_month": { "enable": true, "months": 1 },
+        "two_weeks": { "enable": true, "weeks": 2 },
+        "last_friday": { "enable": true }
+      }
+    },
     "alert_details": {
       "default_tab": "description"
     },
@@ -63,7 +74,8 @@
       "focus_on_alerts_list": "f5",
       "focus_on_alert_details": "f6",
       "focus_on_alert_notes": "f7",
-      "palette": "ctrl+p"
+      "palette": "ctrl+p",
+      "show_next_oncall": "ctrl+o"
     },
     "plugins": {
       "alerts_list_formatter": null,

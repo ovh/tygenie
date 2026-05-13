@@ -16,6 +16,7 @@ import tygenie.screens.settings
 from tygenie import consts
 from tygenie.alert_details.description_formatter import ContentFormatter
 from tygenie.alerts_list.formatter import AlertFormatter
+from tygenie.oncall_notifications import OncallNotifier
 
 
 class TygenieApp(App):
@@ -27,6 +28,13 @@ class TygenieApp(App):
             key="ctrl+s",
             action=f'switch_screen("{consts.SETTINGS_SCREEN_NAME}")',
             description="Settings",
+        ),
+        Binding(
+            key=config.ty_config.tygenie.get("keybindings", {}).get(
+                "show_next_oncall", "ctrl+o"
+            ),
+            action="show_next_oncall",
+            description="Show next oncall",
         ),
         Binding(key="ctrl+q", action="quit", description="Quit"),
     ]
@@ -49,6 +57,7 @@ class TygenieApp(App):
         self.started = False
         self.load_plugins()
         self.load_custom_actions()
+        self.oncall_notifier = OncallNotifier(self)
 
     def load_plugins(self):
         plugins = config.ty_config.tygenie.get("plugins", {})
@@ -79,6 +88,9 @@ class TygenieApp(App):
         self.refresh_bindings()
         await self.get_screen(consts.ALERTS_SCREEN_NAME).reload()
 
+    async def action_show_next_oncall(self) -> None:
+        await self.oncall_notifier.show_next_shift()
+
     def get_theme_variable_defaults(self) -> dict[str, str]:
         theme_config = self.get_theme(self.theme)
         if theme_config is None:
@@ -102,6 +114,14 @@ class TygenieApp(App):
                 message=f"Starting tygenie {consts.VERSION}",
             )
         self.theme = config.ty_config.tygenie.get("theme", "flexoki")
+
+        ocn_config = config.ty_config.tygenie.get("oncall_notifications", {})
+        if ocn_config.get("enable", True):
+            self.run_worker(
+                self.oncall_notifier.check_and_fire(), exclusive=False
+            )
+            interval = max(300, int(ocn_config.get("check_interval", 3600)))
+            self.set_interval(interval, self.oncall_notifier.check_and_fire)
 
 
 def main() -> None:
