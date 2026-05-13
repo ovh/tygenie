@@ -112,6 +112,11 @@ class Config:
             .get("palette", "ctrl+p")
         )
 
+        # Add show_next_oncall keybinding (on-demand notification)
+        self.config.get("tygenie", {}).get("keybindings", {}).setdefault(
+            "show_next_oncall", "ctrl+o"
+        )
+
         # Add displayed_field as a key/value structure
         self.config.get("tygenie", {})["displayed_fields"] = self.config.get(
             "tygenie", {}
@@ -122,6 +127,27 @@ class Config:
         self.config.get("tygenie", {})["enable_saved_searches"] = self.config.get(
             "tygenie", {}
         ).get("enable_saved_searches", True)
+
+        # Add oncall_notifications section for upcoming-shift reminders.
+        # See tygenie/oncall_notifications.py.
+        self.config.get("tygenie", {}).setdefault(
+            "oncall_notifications",
+            {
+                "enable": True,
+                "check_interval": 3600,
+                "notify_at_hour": 10,
+                "urgency": "Critical",
+                "triggers": {
+                    "one_month": {"enable": True, "months": 1},
+                    "two_weeks": {"enable": True, "weeks": 2},
+                    "last_friday": {"enable": True},
+                },
+            },
+        )
+        # Fill urgency on existing oncall_notifications sections that predate it.
+        self.config.get("tygenie", {}).get("oncall_notifications", {}).setdefault(
+            "urgency", "Critical"
+        )
 
         self.save(self.config)
 

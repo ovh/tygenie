@@ -22,9 +22,15 @@ from tygenie.opsgenie_rest_api_client.api.alert import (
     un_acknowledge_alert,
     get_saved_search,
 )
-from tygenie.opsgenie_rest_api_client.api.schedule import list_schedules
+from tygenie.opsgenie_rest_api_client.api.schedule import (
+    get_schedule_timeline,
+    list_schedules,
+)
 from tygenie.opsgenie_rest_api_client.api.who_is_on_call import (
     get_on_calls,
+)
+from tygenie.opsgenie_rest_api_client.models.get_schedule_timeline_interval_unit import (
+    GetScheduleTimelineIntervalUnit,
 )
 from tygenie.opsgenie_rest_api_client.models import list_saved_searches_response
 from tygenie.opsgenie_rest_api_client.models.add_tags_to_alert_payload import (
@@ -132,6 +138,21 @@ class OpsGenie:
     async def whois_on_call(self, parameters: dict = {}):
         params = {"flat": True, "date": pendulum.now()} | parameters
         return await self.api_call(get_on_calls, **params)
+
+    async def get_schedule_timeline(
+        self,
+        identifier: str,
+        interval: int = 3,
+        interval_unit: GetScheduleTimelineIntervalUnit = GetScheduleTimelineIntervalUnit.MONTHS,
+        date: pendulum.DateTime | None = None,
+    ):
+        params = {
+            "identifier": identifier,
+            "interval": interval,
+            "interval_unit": interval_unit,
+            "date": date or pendulum.now(),
+        }
+        return await self.api_call(get_schedule_timeline, **params)
 
     async def api_call(self, resource, **kwargs):
 
