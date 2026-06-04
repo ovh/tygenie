@@ -26,6 +26,7 @@
       "notify_at_hour": 10,
       "timezone": "local",
       "urgency": "Critical",
+      "max_catchup_hours": 24,
       "triggers": {
         "one_month": { "enable": true, "months": 1 },
         "two_weeks": { "enable": true, "weeks": 2 },

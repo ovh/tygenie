@@ -138,6 +138,7 @@ class Config:
                 "notify_at_hour": 10,
                 "timezone": "local",
                 "urgency": "Critical",
+                "max_catchup_hours": 24,
                 "triggers": {
                     "one_month": {"enable": True, "months": 1},
                     "two_weeks": {"enable": True, "weeks": 2},
@@ -145,10 +146,11 @@ class Config:
                 },
             },
         )
-        # Fill urgency / timezone on existing oncall_notifications sections.
+        # Fill urgency / timezone / max_catchup_hours on existing sections.
         ocn = self.config.get("tygenie", {}).get("oncall_notifications", {})
         ocn.setdefault("urgency", "Critical")
         ocn.setdefault("timezone", "local")
+        ocn.setdefault("max_catchup_hours", 24)
 
         self.save(self.config)
 

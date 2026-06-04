@@ -34,6 +34,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "notify_at_hour": 10,
     "timezone": "local",
     "urgency": "Critical",
+    # Triggers whose scheduled time has passed by more than this are not
+    # delivered -- they're silently marked as fired in the state file so
+    # they don't keep being checked. Prevents a burst of stale reminders
+    # the first time the feature is activated against an imminent shift.
+    "max_catchup_hours": 24,
     "triggers": {
         "one_month": {"enable": True, "months": 1},
         "two_weeks": {"enable": True, "weeks": 2},
@@ -233,6 +238,10 @@ class OncallNotifier:
         notify_hour = int(settings.get("notify_at_hour", 10))
         triggers_cfg = settings.get("triggers", {})
         urgency = _resolve_urgency(settings.get("urgency"))
+        max_catchup_hours = max(
+            0, int(settings.get("max_catchup_hours", 24) or 0)
+        )
+        max_catchup_seconds = max_catchup_hours * 3600
         now = pendulum.now(tz)
 
         for shift in shifts:
@@ -242,6 +251,16 @@ class OncallNotifier:
                 if trig_dt > now or trig_dt >= shift.start:
                     continue
                 if self.state.already_fired(shift.key, trig_name):
+                    continue
+                age_seconds = (now - trig_dt).total_seconds()
+                if age_seconds > max_catchup_seconds:
+                    ty_logger.logger.log(
+                        f"oncall_notifications: skipping stale trigger "
+                        f"'{trig_name}' ({age_seconds / 3600:.1f}h late) "
+                        f"for shift {shift.key}"
+                    )
+                    self.state.mark_fired(shift, trig_name, now)
+                    self.state.save()
                     continue
                 try:
                     await self._fire(
