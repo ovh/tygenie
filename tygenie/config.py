@@ -136,6 +136,7 @@ class Config:
                 "enable": True,
                 "check_interval": 3600,
                 "notify_at_hour": 10,
+                "timezone": "local",
                 "urgency": "Critical",
                 "triggers": {
                     "one_month": {"enable": True, "months": 1},
@@ -144,10 +145,10 @@ class Config:
                 },
             },
         )
-        # Fill urgency on existing oncall_notifications sections that predate it.
-        self.config.get("tygenie", {}).get("oncall_notifications", {}).setdefault(
-            "urgency", "Critical"
-        )
+        # Fill urgency / timezone on existing oncall_notifications sections.
+        ocn = self.config.get("tygenie", {}).get("oncall_notifications", {})
+        ocn.setdefault("urgency", "Critical")
+        ocn.setdefault("timezone", "local")
 
         self.save(self.config)
 

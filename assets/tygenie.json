@@ -24,6 +24,7 @@
       "enable": true,
       "check_interval": 3600,
       "notify_at_hour": 10,
+      "timezone": "local",
       "urgency": "Critical",
       "triggers": {
         "one_month": { "enable": true, "months": 1 },
