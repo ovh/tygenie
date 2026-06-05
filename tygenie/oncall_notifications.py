@@ -32,7 +32,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "enable": True,
     "check_interval": 3600,
     "notify_at_hour": 10,
+    "timezone": "local",
     "urgency": "Critical",
+    # Triggers whose scheduled time has passed by more than this are not
+    # delivered -- they're silently marked as fired in the state file so
+    # they don't keep being checked. Prevents a burst of stale reminders
+    # the first time the feature is activated against an imminent shift.
+    "max_catchup_hours": 24,
     "triggers": {
         "one_month": {"enable": True, "months": 1},
         "two_weeks": {"enable": True, "weeks": 2},
@@ -48,6 +54,25 @@ def _resolve_urgency(value: Any) -> Urgency:
     """
     name = str(value or "Critical").capitalize()
     return getattr(Urgency, name, Urgency.Critical)
+
+
+def _resolve_timezone(value: Any) -> str:
+    """Validate a config timezone string. Falls back to ``"local"`` on errors.
+
+    Accepts an IANA name (e.g. ``"Europe/Paris"``), the literal ``"local"``,
+    or empty/None for the system local zone.
+    """
+    tz = str(value).strip() if value else "local"
+    if not tz:
+        tz = "local"
+    try:
+        pendulum.timezone(tz)
+    except Exception as exc:
+        ty_logger.logger.log(
+            f"oncall_notifications: invalid timezone '{tz}' ({exc}), falling back to local"
+        )
+        return "local"
+    return tz
 
 
 @dataclass(frozen=True)
@@ -119,18 +144,23 @@ class OncallNotificationsState:
 
 
 def _trigger_times(
-    shift_start: pendulum.DateTime, triggers_cfg: dict[str, Any], notify_hour: int
+    shift_start: pendulum.DateTime,
+    triggers_cfg: dict[str, Any],
+    notify_hour: int,
+    tz: str = "local",
 ) -> dict[str, pendulum.DateTime]:
     """Compute the firing time for each enabled trigger.
 
     Lead-time triggers may specify ``months``, ``weeks`` and/or ``days``;
     all present units are subtracted from ``shift_start``. The
     ``last_friday`` trigger has no duration -- it lands on the Friday
-    strictly before ``shift_start``.
+    strictly before ``shift_start``. The configured ``tz`` defines what
+    ``notify_hour`` means -- e.g. 10:00 Europe/Paris regardless of the host
+    timezone.
     """
 
     def at_hour(d: pendulum.DateTime) -> pendulum.DateTime:
-        return d.set(hour=notify_hour, minute=0, second=0, microsecond=0)
+        return d.in_tz(tz).set(hour=notify_hour, minute=0, second=0, microsecond=0)
 
     out: dict[str, pendulum.DateTime] = {}
     for name, cfg in triggers_cfg.items():
@@ -185,6 +215,9 @@ class OncallNotifier:
     def _urgency(self) -> Urgency:
         return _resolve_urgency(self._settings().get("urgency"))
 
+    def _tz(self) -> str:
+        return _resolve_timezone(self._settings().get("timezone"))
+
     async def check_and_fire(self) -> None:
         settings = self._settings()
         if not settings.get("enable", True):
@@ -197,22 +230,37 @@ class OncallNotifier:
             )
             return
 
+        tz = _resolve_timezone(settings.get("timezone"))
         self.state.load()
-        self.state.prune(pendulum.now("local").subtract(days=7))
+        self.state.prune(pendulum.now(tz).subtract(days=7))
 
-        shifts = await self._fetch_upcoming_shifts(username)
+        shifts = await self._fetch_upcoming_shifts(username, tz)
         notify_hour = int(settings.get("notify_at_hour", 10))
         triggers_cfg = settings.get("triggers", {})
         urgency = _resolve_urgency(settings.get("urgency"))
-        now = pendulum.now("local")
+        max_catchup_hours = max(
+            0, int(settings.get("max_catchup_hours", 24) or 0)
+        )
+        max_catchup_seconds = max_catchup_hours * 3600
+        now = pendulum.now(tz)
 
         for shift in shifts:
             for trig_name, trig_dt in _trigger_times(
-                shift.start, triggers_cfg, notify_hour
+                shift.start, triggers_cfg, notify_hour, tz
             ).items():
                 if trig_dt > now or trig_dt >= shift.start:
                     continue
                 if self.state.already_fired(shift.key, trig_name):
+                    continue
+                age_seconds = (now - trig_dt).total_seconds()
+                if age_seconds > max_catchup_seconds:
+                    ty_logger.logger.log(
+                        f"oncall_notifications: skipping stale trigger "
+                        f"'{trig_name}' ({age_seconds / 3600:.1f}h late) "
+                        f"for shift {shift.key}"
+                    )
+                    self.state.mark_fired(shift, trig_name, now)
+                    self.state.save()
                     continue
                 try:
                     await self._fire(
@@ -220,6 +268,7 @@ class OncallNotifier:
                         trig_name,
                         triggers_cfg.get(trig_name, {}),
                         urgency,
+                        tz,
                     )
                 except Exception as exc:
                     ty_logger.logger.log(
@@ -229,13 +278,15 @@ class OncallNotifier:
                 self.state.mark_fired(shift, trig_name, now)
                 self.state.save()
 
-    async def _fetch_upcoming_shifts(self, username: str) -> list[Shift]:
+    async def _fetch_upcoming_shifts(
+        self, username: str, tz: str = "local"
+    ) -> list[Shift]:
         schedule_ids = config.ty_config.opsgenie.get("on_call_schedule_ids", [])
         if not schedule_ids:
             return []
 
         shifts: dict[str, Shift] = {}
-        now_local = pendulum.now("local")
+        now_local = pendulum.now(tz)
         for sched_id in schedule_ids:
             try:
                 resp = await opsgenie.client.api.get_schedule_timeline(
@@ -270,6 +321,7 @@ class OncallNotifier:
                         now_local,
                         schedule_name=schedule_name,
                         rotation_name=rotation_name,
+                        tz=tz,
                     )
                     if shift is None:
                         continue
@@ -284,6 +336,7 @@ class OncallNotifier:
         now_local: pendulum.DateTime,
         schedule_name: str = "",
         rotation_name: str = "",
+        tz: str = "local",
     ) -> Shift | None:
         start_raw = getattr(period, "start_date", None)
         end_raw = getattr(period, "end_date", None)
@@ -305,8 +358,8 @@ class OncallNotifier:
         if not any(_strip_domain(n) == username for n in recipients):
             return None
 
-        start = pendulum.instance(start_raw).in_tz("local")
-        end = pendulum.instance(end_raw).in_tz("local")
+        start = pendulum.instance(start_raw).in_tz(tz)
+        end = pendulum.instance(end_raw).in_tz(tz)
         if start <= now_local:
             return None  # active or past shift, no pre-notification
         return Shift(
@@ -323,11 +376,14 @@ class OncallNotifier:
         trigger: str,
         trigger_cfg: dict[str, Any],
         urgency: Urgency,
+        tz: str = "local",
     ) -> None:
         label = _trigger_label(trigger, trigger_cfg)
         title = f"Tygenie: oncall shift reminder ({label})"
         await self.app.notifier.send(
-            title=title, message=_format_shift_message(shift), urgency=urgency
+            title=title,
+            message=_format_shift_message(shift, tz=tz),
+            urgency=urgency,
         )
         ty_logger.logger.log(
             f"oncall_notifications: fired {trigger} for shift {shift.key}"
@@ -340,6 +396,7 @@ class OncallNotifier:
         can always pull this information on demand.
         """
         urgency = self._urgency()
+        tz = self._tz()
         username = _strip_domain(config.ty_config.opsgenie.get("username", ""))
         if not username:
             await self.app.notifier.send(
@@ -349,7 +406,7 @@ class OncallNotifier:
             )
             return
 
-        shifts = await self._fetch_upcoming_shifts(username)
+        shifts = await self._fetch_upcoming_shifts(username, tz)
         if not shifts:
             await self.app.notifier.send(
                 title="Tygenie: next oncall",
@@ -361,7 +418,7 @@ class OncallNotifier:
         shift = shifts[0]
         await self.app.notifier.send(
             title="Tygenie: your next oncall shift",
-            message=_format_shift_message(shift, include_lead_time=True),
+            message=_format_shift_message(shift, include_lead_time=True, tz=tz),
             urgency=urgency,
         )
         ty_logger.logger.log(
@@ -369,15 +426,21 @@ class OncallNotifier:
         )
 
 
-def _format_shift_message(shift: Shift, include_lead_time: bool = False) -> str:
-    start_fmt = shift.start.format("dddd D MMM YYYY HH:mm zz")
-    end_fmt = shift.end.format("ddd D MMM HH:mm")
+def _format_shift_message(
+    shift: Shift, include_lead_time: bool = False, tz: str = "local"
+) -> str:
+    # Render shift times in the user's configured timezone so the displayed
+    # hour matches the one used for trigger computation.
+    start_local = shift.start.in_tz(tz)
+    end_local = shift.end.in_tz(tz)
+    start_fmt = start_local.format("dddd D MMM YYYY HH:mm zz")
+    end_fmt = end_local.format("ddd D MMM HH:mm")
     lines = [f"You are on call starting {start_fmt}.", f"Ends {end_fmt}."]
     context = shift.context_line()
     if context:
         lines.append(context)
     if include_lead_time:
-        delta_days = (shift.start.date() - pendulum.now("local").date()).days
+        delta_days = (start_local.date() - pendulum.now(tz).date()).days
         if delta_days > 0:
             lines.append(f"Starts in {delta_days} day{'s' if delta_days != 1 else ''}.")
     return "\n".join(lines)
