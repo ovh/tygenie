@@ -77,7 +77,8 @@
       "focus_on_alert_details": "f6",
       "focus_on_alert_notes": "f7",
       "palette": "ctrl+p",
-      "show_next_oncall": "ctrl+o"
+      "show_next_oncall": "ctrl+o",
+      "ack_close_duration": "d"
     },
     "plugins": {
       "alerts_list_formatter": null,

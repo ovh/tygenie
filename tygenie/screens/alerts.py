@@ -32,6 +32,58 @@ from udatetime import from_string as dtfstr
 import tygenie.config as config
 import tygenie.opsgenie as opsgenie
 from tygenie import consts
+from tygenie.opsgenie_rest_api_client.types import Unset
+
+
+def _is_unset(value) -> bool:
+    return isinstance(value, Unset)
+
+
+def _coerce_int(value) -> int | None:
+    if value is None or _is_unset(value):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _format_duration_ms(ms: int) -> str:
+    if ms < 0:
+        ms = 0
+    total_seconds = ms // 1000
+    days, remainder = divmod(total_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts: list[str] = []
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if seconds or not parts:
+        parts.append(f"{seconds}s")
+    return " ".join(parts)
+
+
+def _ack_close_duration_message(report) -> tuple[str, str]:
+    """Return (severity, message) describing ack->close duration of ``report``.
+
+    ``severity`` is either ``"information"`` or ``"warning"``. The caller is
+    responsible for surfacing the message via the screen's notify().
+    """
+    if not report or _is_unset(report):
+        return "warning", "No report available for this alert yet."
+    ack_time_ms = _coerce_int(getattr(report, "ack_time", None))
+    close_time_ms = _coerce_int(getattr(report, "close_time", None))
+    if ack_time_ms is None or ack_time_ms <= 0:
+        return "warning", "Alert was never acknowledged."
+    if close_time_ms is None or close_time_ms <= 0:
+        return "warning", "Alert has not been closed yet."
+    if close_time_ms < ack_time_ms:
+        return "warning", "Alert was closed before being acknowledged."
+    return "information", _format_duration_ms(close_time_ms - ack_time_ms)
 from tygenie.screen import TyScreen
 from tygenie.widgets.alert_actions import AlertActionContainer
 from tygenie.widgets.alert_details import (
@@ -74,6 +126,7 @@ class AlertsScreen(TyScreen):
         "focus_on_alerts_list": "f5",
         "focus_on_alert_details": "f6",
         "focus_on_alert_notes": "f7",
+        "ack_close_duration": "d",
     }
 
     BINDINGS = [
@@ -128,6 +181,12 @@ class AlertsScreen(TyScreen):
             id="open_in_webbrowser",
             action="open_in_webbrowser()",
             description="In Web Browser",
+        ),
+        Binding(
+            key=kb["ack_close_duration"],
+            id="ack_close_duration",
+            action="post_ack_close_duration()",
+            description="Ack→Close",
         ),
         Binding(
             key=kb["focus_on_alerts_list"],
@@ -195,6 +254,9 @@ class AlertsScreen(TyScreen):
 
     class CloseAlert(Message):
         """A message to close the selected alert"""
+
+    class AckCloseDuration(Message):
+        """A message to show the ack-to-close duration of the selected alert"""
 
     class GetAlertsList(Message):
         """A message to fetch alerts list"""
@@ -828,6 +890,33 @@ class AlertsScreen(TyScreen):
 
     def action_post_close_alert(self):
         self.post_message(self.CloseAlert())
+
+    def action_post_ack_close_duration(self):
+        self.post_message(self.AckCloseDuration())
+
+    @on(AckCloseDuration)
+    @work(exclusive=True, exit_on_error=False, thread=False)
+    async def show_ack_close_duration(self):
+        opsgenie_id = self._get_cursor_opsgenie_id()
+        if opsgenie_id is None:
+            self._notify_invalid_opsgenie_id()
+            return
+
+        response = await opsgenie.client.api.get_alert(
+            parameters={"identifier": opsgenie_id, "identifier_type": "id"}
+        )
+        alert = getattr(response, "data", None) if response is not None else None
+        if alert is None:
+            self.notify(severity="error", message="Unable to fetch alert details")
+            return
+
+        severity, message = _ack_close_duration_message(
+            getattr(alert, "report", None)
+        )
+        if severity == "information":
+            self.notify(title="Ack → Close duration", message=message, timeout=10)
+        else:
+            self.notify(severity=severity, message=message)
 
     @on(CloseAlert)
     @work(exclusive=True, exit_on_error=False, thread=False)
