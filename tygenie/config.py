@@ -117,6 +117,11 @@ class Config:
             "show_next_oncall", "ctrl+o"
         )
 
+        # Add ack_close_duration keybinding (Ack -> Close duration shortcut)
+        self.config.get("tygenie", {}).get("keybindings", {}).setdefault(
+            "ack_close_duration", "d"
+        )
+
         # Add displayed_field as a key/value structure
         self.config.get("tygenie", {})["displayed_fields"] = self.config.get(
             "tygenie", {}
