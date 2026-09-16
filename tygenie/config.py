@@ -157,6 +157,13 @@ class Config:
         ocn.setdefault("timezone", "local")
         ocn.setdefault("max_catchup_hours", 24)
 
+        # Add webapp_alert_url template, used to open an alert in the browser.
+        # Opsgenie: "{webapp_url}/alert/detail/{id}/details"
+        # Jira Service Management: "{webapp_url}/jira/ops/alerts/{id}"
+        self.config.setdefault("opsgenie", {}).setdefault(
+            "webapp_alert_url", "{webapp_url}/alert/detail/{id}/details"
+        )
+
         self.save(self.config)
 
 

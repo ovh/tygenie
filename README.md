@@ -144,6 +144,8 @@ options:
     username: "", //                                                    Your Opsgenie username
     host: "https://api.eu.opsgenie.com", //                             Opsgenie API endpoint
     webapp_url: "https://app.eu.opsgenie.com", //                       The Web URL to access Opsgenie from your web browser
+    webapp_alert_url: "{webapp_url}/alert/detail/{id}/details", //      Alert URL template used to open an alert in the browser
+                                                               //      Jira Service Management: "{webapp_url}/jira/ops/alerts/{id}"
     on_call_schedule_ids: [],
   },
   // Tygenie configuration part

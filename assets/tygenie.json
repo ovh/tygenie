@@ -4,6 +4,7 @@
     "username": "",
     "host": "https://api.eu.opsgenie.com",
     "webapp_url": "https://app.eu.opsgenie.com",
+    "webapp_alert_url": "{webapp_url}/alert/detail/{id}/details",
     "on_call_schedule_ids": []
   },
   "tygenie": {

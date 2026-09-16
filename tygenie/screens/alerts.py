@@ -1108,8 +1108,14 @@ class AlertsScreen(TyScreen):
             self._notify_invalid_opsgenie_id()
             return
 
-        webapp_url = config.ty_config.opsgenie.get("webapp_url")
-        webbrowser.open_new_tab(f"{webapp_url}/alert/detail/{opsgenie_id}/details")
+        webapp_url = str(config.ty_config.opsgenie.get("webapp_url", "")).rstrip("/")
+        # Alert URL layout differs between Opsgenie and Jira Service Management
+        url_template = config.ty_config.opsgenie.get(
+            "webapp_alert_url", "{webapp_url}/alert/detail/{id}/details"
+        )
+        webbrowser.open_new_tab(
+            url_template.format(webapp_url=webapp_url, id=opsgenie_id)
+        )
 
     def action_open_in_webbrowser(self):
         self.open_in_webbrowser()
