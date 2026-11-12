@@ -19,7 +19,8 @@
     "desktop_notification": {
       "enable": true,
       "urgency": "Critical",
-      "when_on_call_only": false
+      "when_on_call_only": false,
+      "max_age_factor": 10
     },
     "oncall_notifications": {
       "enable": true,
