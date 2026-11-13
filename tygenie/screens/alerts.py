@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import re
 import time
 import webbrowser
@@ -32,6 +33,12 @@ from udatetime import from_string as dtfstr
 import tygenie.config as config
 import tygenie.opsgenie as opsgenie
 from tygenie import consts
+from tygenie.notification import (
+    DEFAULT_MAX_AGE_FACTOR,
+    format_alert_line,
+    is_recent,
+    max_alert_age,
+)
 from tygenie.opsgenie_rest_api_client.types import Unset
 
 
@@ -617,6 +624,19 @@ class AlertsScreen(TyScreen):
             # Store current rows indexes to build a notifiication
             previous_rows = [r.key.value for r in table.rows.values()]
             rows_messages = []
+            # Only alerts created recently are eligible for desktop
+            # notification: an old alert may show up in page 1 because
+            # alerts above it were closed, or because it re-entered the
+            # current filter (un-ack, snooze expired, ...)
+            dn_config = config.ty_config.tygenie.get("desktop_notification", {})
+            max_age = max_alert_age(
+                config.ty_config.tygenie.get("refresh_period", 300),
+                dn_config.get("max_age_factor", DEFAULT_MAX_AGE_FACTOR),
+            )
+            now = datetime.datetime.now(datetime.timezone.utc)
+            date_format = config.ty_config.tygenie.get("alerts", {}).get(
+                "date_format", "%d/%m %H:%M"
+            )
             current_row = table.cursor_row
             row_coordinate = 0
 
@@ -654,8 +674,14 @@ class AlertsScreen(TyScreen):
 
                 # Check if this is a new alert, in such case keep the message only
                 # It works if we are on first page of data
-                if self.page == 1 and key not in previous_rows:
-                    rows_messages.append(alert.message)
+                if (
+                    self.page == 1
+                    and key not in previous_rows
+                    and is_recent(alert.created_at, now, max_age)
+                ):
+                    rows_messages.append(
+                        format_alert_line(alert.message, alert.created_at, date_format)
+                    )
 
             # Compute the highlighted row depending the mode we are
             # If previous or next or new_filter => 0
@@ -754,10 +780,11 @@ class AlertsScreen(TyScreen):
 
             # Urgency can be: Critical, Normal, Low
             urgency = str(dn_config.get("urgency", "Critical")).capitalize()
-            messages = [f"- {r}" for r in result["rows_messages"]]
+            messages = result["rows_messages"]
             notifier = self.app.notifier
+            sent_at = datetime.datetime.now().strftime("%H:%M:%S")
             await notifier.send(
-                title=f'Tygenie: {len(result["rows_messages"])} new alerts',
+                title=f"Tygenie: {len(messages)} new alerts ({sent_at})",
                 message="\n".join(messages),
                 urgency=getattr(Urgency, urgency),
             )
@@ -1108,8 +1135,14 @@ class AlertsScreen(TyScreen):
             self._notify_invalid_opsgenie_id()
             return
 
-        webapp_url = config.ty_config.opsgenie.get("webapp_url")
-        webbrowser.open_new_tab(f"{webapp_url}/alert/detail/{opsgenie_id}/details")
+        webapp_url = str(config.ty_config.opsgenie.get("webapp_url", "")).rstrip("/")
+        # Alert URL layout differs between Opsgenie and Jira Service Management
+        url_template = config.ty_config.opsgenie.get(
+            "webapp_alert_url", "{webapp_url}/alert/detail/{id}/details"
+        )
+        webbrowser.open_new_tab(
+            url_template.format(webapp_url=webapp_url, id=opsgenie_id)
+        )
 
     def action_open_in_webbrowser(self):
         self.open_in_webbrowser()

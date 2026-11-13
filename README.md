@@ -144,6 +144,8 @@ options:
     username: "", //                                                    Your Opsgenie username
     host: "https://api.eu.opsgenie.com", //                             Opsgenie API endpoint
     webapp_url: "https://app.eu.opsgenie.com", //                       The Web URL to access Opsgenie from your web browser
+    webapp_alert_url: "{webapp_url}/alert/detail/{id}/details", //      Alert URL template used to open an alert in the browser
+                                                               //      Jira Service Management: "{webapp_url}/jira/ops/alerts/{id}"
     on_call_schedule_ids: [],
   },
   // Tygenie configuration part
@@ -158,6 +160,7 @@ options:
       enable: true, //                                                  To enable desktop notification when new alerts are detected set it to true
       urgency: "Critical", //                                           Urgency level: can be Critical, Normal, Low
       when_on_call_only: false, //                                      When enable is true will send notification only when you are on call
+      max_age_factor: 10, //                                            Only alerts created less than refresh_period x max_age_factor seconds ago trigger a notification (prevents old alerts re-entering page 1 from being notified)
     },
     alert_details: {
       default_tab: "description", //                                    Default tab displayed when loading alert details, values might be: RAW, tags, details, description
